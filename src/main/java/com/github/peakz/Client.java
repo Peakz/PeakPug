@@ -14,4 +14,5 @@ public class Client {
 			return clientBuilder.build(); // Creates the client instance but it doesn't log the client in yet, you would have to call client.login() yourself
 		}
 	}
+
 }
