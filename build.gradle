@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'idea'
+    // Allows running "gradle shadowJar" to create an executable JAR of your project
+    id 'com.github.johnrengelman.shadow' version '2.0.0'
+}
+
+group 'peakpug'
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter() //This prevents issues with transitive dependencies
+    maven {
+        url  "https://jitpack.io"
+    }
+}
+
+dependencies {
+    compile "com.github.austinv11:Discord4J:2.8.4"
+    compile "com.github.Discord4J-Addons:Commands4J:2.0"
+    compile "mysql:mysql-connector-java:5.1.40"
+    //compile "com.github.austinv11:Discord4J:@VERSION@:shaded" //Use this line instead of the one above it if you want a shaded jar (all the Discord4J dependencies bundled into one jar)
+}
+
+shadowJar {
+
+    manifest {
+        attributes 'Main-Class': 'com.github.peakz.Main'
+    }
+}
