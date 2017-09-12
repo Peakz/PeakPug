@@ -72,4 +72,8 @@ public class TeamObject {
 	public void setPlayer_5(PlayerObject player_5) {
 		this.player_5 = player_5;
 	}
+
+	public int getAvgRating() {
+		return ((captain.getRating() + player_1.getRating() + player_2.getRating() + player_3.getRating() + player_4.getRating() + player_5.getRating()) / 6);
+	}
 }

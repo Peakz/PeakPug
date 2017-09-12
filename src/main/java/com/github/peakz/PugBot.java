@@ -3,19 +3,15 @@ package com.github.peakz;
 import com.darichey.discord.Command;
 import com.darichey.discord.CommandListener;
 import com.darichey.discord.CommandRegistry;
-import com.github.peakz.DAO.PlayerDAO;
-import com.github.peakz.DAO.PlayerDAOImp;
-import com.github.peakz.DAO.PlayerObject;
+import com.github.peakz.DAO.*;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.EmbedBuilder;
 import sx.blah.discord.util.RequestBuffer;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 public class PugBot {
@@ -29,20 +25,20 @@ public class PugBot {
 	private static String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
 	private static String [] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
 	private static String[][] MODES = {ESCORT, HYBRID, CONTROL, ASSAULT};
-	private static String selectedMap = "";
+	// private static String selectedMap = "";
 
 	//for future feature
 	//private static String [] ARENA = {"Black Forest", "Castillo", "Ecopoint: Antarctica", "Necropolis"};
 
 	private static PlayerDAO playerDAO = new PlayerDAOImp();
-	private static boolean allowRegister = true;
+	// private static boolean allowRegister = true;
 	private static int antiRNG = 0;
 
-	private static PlayerObject[] red = new PlayerObject[5];
-	private static PlayerObject[] blue = new PlayerObject[5];
-	private static int turnToPick = 0;
+	// private static PlayerObject[] red = new PlayerObject[5];
+	// private static PlayerObject[] blue = new PlayerObject[5];
+	// private static int turnToPick = 0;
 
-	public static ArrayList<PlayerObject> allPlayers = new ArrayList<>();
+	// public static ArrayList<PlayerObject> allPlayers = new ArrayList<>();
 
 	public PugBot(IDiscordClient client) {
 		this.client = client; // Sets the client instance to the one provided
@@ -191,6 +187,8 @@ public class PugBot {
 				})
 				.build();
 
+		/**
+
 		Command queue = Command.builder()
 				.onCalled(ctx -> {
 					String id = ctx.getAuthor().getStringID();
@@ -321,6 +319,65 @@ public class PugBot {
 					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're not queued.");
 				})
 				.build();
+		 */
+
+		Command result = Command.builder()
+				.onCalled(ctx -> {
+					String[] strArr = new String[3];
+					int i = 0;
+
+					/**
+					 * Store the split strings
+					 */
+					for(String val : ctx.getMessage().getContent().split(" ", 3)) {
+						strArr[i] = val;
+						i++;
+					}
+
+					MatchDAO matchDAO = new MatchDAOImp();
+					MatchObject match = matchDAO.getMatch(strArr[1]);
+					if(match != null && !(match.isRecorded())) {
+						if (match != null && strArr[2].toUpperCase().equals("RED")) {
+							match.setWinner(true);
+							match.setRecorded(true);
+							matchDAO.updateMatch(match);
+
+							for (String player_id : match.getPlayer_ids()) {
+								if (match.getPlayer_ids().indexOf(player_id) < 6) {
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, false);
+								} else {
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, true);
+								}
+							}
+
+							ctx.getMessage().addReaction(":white_check_mark:");
+						} else if (match != null && strArr[2].toUpperCase().equals("BLUE")) {
+							match.setWinner(false);
+							match.setRecorded(true);
+							matchDAO.updateMatch(match);
+
+							for (String player_id : match.getPlayer_ids()) {
+								if (match.getPlayer_ids().indexOf(player_id) > 5) {
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, false);
+								} else {
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, true);
+								}
+							}
+							ctx.getMessage().addReaction(":white_check_mark:");
+						} else {
+							ctx.getMessage().addReaction(":x:");
+						}
+					} else {
+						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + "the match is already recorded.");
+					}
+				})
+				.build();
+
+		Command rank = Command.builder()
+				.onCalled(ctx -> {
+					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you rating is " + playerDAO.getPlayer(ctx.getAuthor().getStringID()).getRating());
+				})
+				.build();
 
 		Command help = Command.builder()
 				.onCalled(ctx -> {
@@ -337,12 +394,17 @@ public class PugBot {
 		registry.register(register, "register");
 		registry.register(update, "Update");
 		registry.register(update, "update");
-		registry.register(queue, "Queue");
+		registry.register(result, "Result");
+		registry.register(result, "result");
+		registry.register(rank, "Rating");
+		registry.register(rank, "rating");
+		/** registry.register(queue, "Queue");
 		registry.register(queue, "queue");
 		registry.register(pick, "Pick");
 		registry.register(pick, "pick");
 		registry.register(exit, "Exit");
 		registry.register(exit, "exit");
+		 */
 		registry.register(help, "Help");
 		registry.register(help, "help");
 		client.getDispatcher().registerListener(new CommandListener(registry));
@@ -383,10 +445,6 @@ public class PugBot {
 		RequestBuffer.request(() -> channel.sendMessage(builder.build()));
 	}
 
-	private static void queuePlayer(PlayerObject player) {
-		allPlayers.add(player);
-	}
-
 	private static void registerPlayer(String id, String primaryRole, String secondaryRole, Long long_id) {
 		playerDAO.insertPlayer(new PlayerObject(id, primaryRole, secondaryRole,1000, long_id));
 	}
@@ -398,7 +456,7 @@ public class PugBot {
 		playerDAO.updatePlayer(player);
 	}
 
-	private static String selectMap(){
+	public static String selectMap(){
 		Random random = new Random();
 		int n = random.nextInt(3);
 		int m;
@@ -426,11 +484,12 @@ public class PugBot {
 		return null;
 	}
 
-	private static void poolBuilder(IChannel channel) {
+	/**
+	private static void poolBuilder(IChannel channel, MatchObject match) {
 		EmbedBuilder builder = new EmbedBuilder();
 
 		selectedMap = selectMap();
-		builder.appendField("**RED TEAM**", "Captain: " + red[0], true);
+		builder.appendField("**RED TEAM**", , true);
 		builder.appendField("**BLUE TEAM**", "Captain: " + blue[0], true);
 
 		builder.withColor(0, 153, 255);
@@ -446,6 +505,7 @@ public class PugBot {
 		builder.withThumbnail(getMapImg(selectedMap));
 		RequestBuffer.request(() -> channel.sendMessage(builder.build()));
 	}
+	 */
 
 	public static String getMapImg(String map) {
 
@@ -498,5 +558,9 @@ public class PugBot {
 			default:
 				return null;
 		}
+	}
+
+	public static void recordResult(String id) {
+
 	}
 }
