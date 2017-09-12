@@ -48,10 +48,11 @@ public class AnnotationListener {
 
 					MatchDAO matchDAO = new MatchDAOImp();
 					matchDAO.insertMatch(match);
+					break;
 				} else if((players.size() < 10) && (player != null)) {
 					players.add(player);
+					break;
 				}
-				break;
 			default:
 				break;
 		}
