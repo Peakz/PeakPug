@@ -1,12 +1,13 @@
 package com.github.peakz.DAO;
 
-import java.util.List;
+import java.util.ArrayList;
 
 public interface PlayerDAO {
-	List<PlayerObject> getAllPlayers();
+	ArrayList<PlayerObject> getPlayersSorted(ArrayList<PlayerObject> players);
 	PlayerObject getPlayer(String id);
 	void insertPlayer(PlayerObject player);
 	void updatePlayer(PlayerObject player);
+	void updateMMR(String id, int mmr, boolean change);
 	void deletePlayer(PlayerObject player);
 	boolean checkId(String id);
 	boolean checkPrimaryRole(PlayerObject player);

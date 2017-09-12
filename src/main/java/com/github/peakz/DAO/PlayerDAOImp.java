@@ -2,36 +2,37 @@ package com.github.peakz.DAO;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 
 public class PlayerDAOImp implements PlayerDAO {
 
 	/**
-	 * Get all the Players in the database in a ArraySet
+	 * Get all the Players in the database in a ArrayList
 	 *
 	 * @return allPlayers
 	 */
 	@Override
-	public List<PlayerObject> getAllPlayers() {
+	public ArrayList<PlayerObject> getPlayersSorted(ArrayList<PlayerObject> players) {
 		try (Connection con = ConnectionFactory.getConnection()) {
-			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery("SELECT * FROM player");
+			for (PlayerObject player_id : players) {
+				Statement st = con.createStatement();
+				ResultSet rs = st.executeQuery("SELECT * FROM player WHERE id='" + player_id + "' ");
 
-			List<PlayerObject> allPlayers = new ArrayList<>();
+				ArrayList<PlayerObject> sortedRating = new ArrayList<>();
 
-			while (rs.next()) {
-				PlayerObject player = new PlayerObject();
+				if (rs.next()) {
+					PlayerObject player = new PlayerObject();
 
-				player.setId(rs.getString("id"));
-				player.setPrimaryRole(rs.getString("primary_role"));
-				player.setSecondaryRole(rs.getString("secondary_role"));
-				player.setRating(rs.getInt("rating"));
-				player.setLong_id(rs.getLong("long_id"));
+					player.setId(rs.getString("id"));
+					player.setPrimaryRole(rs.getString("primary_role"));
+					player.setSecondaryRole(rs.getString("secondary_role"));
+					player.setRating(rs.getInt("rating"));
+					player.setLong_id(rs.getLong("long_id"));
 
-				allPlayers.add(player);
+					sortedRating.add(player);
+				}
+				con.close();
+				return sortedRating;
 			}
-			con.close();
-			return allPlayers;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -117,6 +118,28 @@ public class PlayerDAOImp implements PlayerDAO {
 			pst.executeUpdate();
 
 			con.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void updateMMR(String id, int mmr, boolean change) {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			if(change) {
+				String str = "UPDATE player SET rating = " + mmr + " WHERE id =" + id;
+
+				PreparedStatement pst = con.prepareStatement(str);
+				pst.executeUpdate(str);
+				con.close();
+			} else {
+				String str = "UPDATE player SET rating = " + mmr + " WHERE id =" + id;
+
+				PreparedStatement pst = con.prepareStatement(str);
+				pst.executeUpdate(str);
+				con.close();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
