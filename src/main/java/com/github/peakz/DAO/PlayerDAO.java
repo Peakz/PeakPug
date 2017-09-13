@@ -3,13 +3,12 @@ package com.github.peakz.DAO;
 import java.util.ArrayList;
 
 public interface PlayerDAO {
-	ArrayList<PlayerObject> getPlayersSorted(ArrayList<PlayerObject> players);
-	PlayerObject getPlayer(String id);
+	PlayerObject getPlayer(String player_id);
+	ArrayList<PlayerObject> getPlayersTeam(int team_id);
 	void insertPlayer(PlayerObject player);
 	void updatePlayer(PlayerObject player);
-	void updateMMR(String id, int mmr, String status);
 	void deletePlayer(PlayerObject player);
-	boolean checkId(String id);
-	boolean checkPrimaryRole(PlayerObject player);
-	boolean checkSecondaryRole(PlayerObject player);
+	boolean checkId(String player_id);
+	boolean checkRoles(String player_id, String primaryRole, String secondaryRole);
+	int checkMMR(String player_id);
 }

@@ -8,12 +8,12 @@ import java.sql.Statement;
 public class TeamDAOImp implements TeamDAO {
 
 	@Override
-	public TeamObject getTeam(String match_id, String color) {
+	public TeamObject getTeam(int match_id, String color) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT * FROM team WHERE match.match_id=" + match_id + " AND team.team_color=" + color);
+					.executeQuery("SELECT * FROM team WHERE pug_match.match_id=" + match_id + " AND team.team_color=" + color);
 
 			if(rs.next()) {
 				TeamObject team = new TeamObject();
@@ -32,36 +32,34 @@ public class TeamDAOImp implements TeamDAO {
 		return null;
 	}
 
+	/**
+	 * Insert a TeamObject into the db, doesn't take whole object, just the string ids.
+	 * @param team
+	 */
 	@Override
-	public void insertTeam(String id, String color) {
+	public void insertTeam(TeamObject team) {
 		Connection con = ConnectionFactory.getConnection();
+
 		try {
-			PreparedStatement pst = con.prepareStatement(
-					"INSERT INTO team "
-							+ "(color, "
-							+ "captain)"
-							+ "VALUES (?, ?)");
+			PreparedStatement pst = con.prepareStatement("INSERT INTO team "
+					+ "(color, "
+					+ "captain_id,"
+					+ "player_1_id,"
+					+ "player_2_id,"
+					+ "player_3_id,"
+					+ "player_4_id,"
+					+ "player_5_id)"
+					+ "VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-			pst.setString(1, id);
-			pst.setString(2, color);
+			pst.setString(1, team.getColor());
+			pst.setString(2, team.getCaptain().getId());
+			pst.setString(3, team.getPlayer_1().getId());
+			pst.setString(4, team.getPlayer_2().getId());
+			pst.setString(5, team.getPlayer_3().getId());
+			pst.setString(6, team.getPlayer_4().getId());
+			pst.setString(7, team.getPlayer_5().getId());
+
 			pst.executeUpdate();
-
-			con.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public void updateTeam(String match_id, String color) {
-		Connection con = ConnectionFactory.getConnection();
-		try {
-			PreparedStatement pst = con.prepareStatement("UPDATE team SET captain = ?, color = ? WHERE match_id =" + match_id + " AND color=" + color);
-
-			pst.setString(1, match_id);
-			pst.setString(2, color);
-			pst.executeUpdate();
-
 			con.close();
 		} catch (Exception e) {
 			e.printStackTrace();
