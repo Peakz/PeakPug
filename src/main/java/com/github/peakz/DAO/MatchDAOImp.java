@@ -14,23 +14,21 @@ public class MatchDAOImp implements MatchDAO{
 	}
 
 	@Override
-	public MatchObject getLastMatchID() {
+	public int getLastMatchID() {
 		Connection con = ConnectionFactory.getConnection();
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT pug_id FROM pug_match ORDER BY pug_id DESC LIMIT 1");
+					.executeQuery("SELECT match_id FROM pug_match ORDER BY match_id DESC LIMIT 1");
 
 			if (rs.next()) {
-				MatchObject match = new MatchObject();
-				match.setId(rs.getInt("pug_id"));
 				con.close();
-				return match;
+				return rs.getInt("match_id");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
+		return 0;
 	}
 
 	@Override

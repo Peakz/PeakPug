@@ -12,6 +12,7 @@ import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.EmbedBuilder;
 import sx.blah.discord.util.RequestBuffer;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class PugBot {
@@ -25,20 +26,9 @@ public class PugBot {
 	private static String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
 	private static String [] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
 	private static String[][] MODES = {ESCORT, HYBRID, CONTROL, ASSAULT};
-	// private static String selectedMap = "";
-
-	//for future feature
-	//private static String [] ARENA = {"Black Forest", "Castillo", "Ecopoint: Antarctica", "Necropolis"};
 
 	private static PlayerDAO playerDAO = new PlayerDAOImp();
-	// private static boolean allowRegister = true;
 	private static int antiRNG = 0;
-
-	// private static PlayerObject[] red = new PlayerObject[5];
-	// private static PlayerObject[] blue = new PlayerObject[5];
-	// private static int turnToPick = 0;
-
-	// public static ArrayList<PlayerObject> allPlayers = new ArrayList<>();
 
 	public PugBot(IDiscordClient client) {
 		this.client = client; // Sets the client instance to the one provided
@@ -94,25 +84,25 @@ public class PugBot {
 						switch((strArr[1].toUpperCase())) {
 							case "TANK":
 								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2], user.getLongID());
+									registerPlayer(id, strArr[1], strArr[2]);
 									ctx.getMessage().addReaction(":white_check_mark:");
 								}
 								break;
 							case "SUPP":
 								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("TANK")) {
-									registerPlayer(id, strArr[1], strArr[2], user.getLongID());
+									registerPlayer(id, strArr[1], strArr[2]);
 									ctx.getMessage().addReaction(":white_check_mark:");
 								}
 								break;
 							case "FLEX":
 								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2], user.getLongID());
+									registerPlayer(id, strArr[1], strArr[2]);
 									ctx.getMessage().addReaction(":white_check_mark:");
 								}
 								break;
 							case "DPS":
 								if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2], user.getLongID());
+									registerPlayer(id, strArr[1], strArr[2]);
 									ctx.getMessage().addReaction(":white_check_mark:");
 								}
 								break;
@@ -187,11 +177,9 @@ public class PugBot {
 				})
 				.build();
 
-		/**
-
 		Command queue = Command.builder()
 				.onCalled(ctx -> {
-					String id = ctx.getAuthor().getStringID();
+					/**String id = ctx.getAuthor().getStringID();
 					if  (allowRegister) {
 						if (allPlayers.size() < 14) {
 							if (playerDAO.checkId(id)) {
@@ -227,11 +215,14 @@ public class PugBot {
 					} else {
 						ctx.getChannel().sendMessage("Pick phase already in progress.");
 					}
+					 */
 				})
 				.build();
 
 		Command pick = Command.builder()
 				.onCalled(ctx -> {
+					/**
+
 					IGuild guild = ctx.getGuild();
 					IUser user = guild.getUserByID(ctx.getMessage().getMentions().get(0).getLongID());
 
@@ -305,11 +296,13 @@ public class PugBot {
 							blue = new PlayerObject[5];
 							break;
 					}
+					 */
 				})
 				.build();
 
 		Command exit = Command.builder()
 				.onCalled(ctx -> {
+					/**
 					PlayerObject player = playerDAO.getPlayer(ctx.getAuthor().getStringID());
 					if (allPlayers.contains(player)) {
 						allPlayers.remove(player);
@@ -317,9 +310,9 @@ public class PugBot {
 					}
 
 					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're not queued.");
+					 */
 				})
 				.build();
-		 */
 
 		Command result = Command.builder()
 				.onCalled(ctx -> {
@@ -334,50 +327,47 @@ public class PugBot {
 						i++;
 					}
 
+					// create a MatchObject and get the match for the match id that's typed in.
 					MatchDAO matchDAO = new MatchDAOImp();
-					MatchObject match = matchDAO.getMatch(strArr[1]);
+					MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
 
-					String blue_cpt = match.getTeam_blue().getCaptain().getId();
-					String red_cpt = match.getTeam_red().getCaptain().getId();
-					String author_id = ctx.getAuthor().getStringID();
+					// check if the match exists
+					if(match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
 
-					if(ctx.getMessage().getContent().toUpperCase().equals("!RESULT " + match.getId() + " RED")){
-						match.setRed_count(1);
-					}
+						VerificationDAO verificationDAO = new VerificationDAOImp();
 
-					if((match != null && match.isRecorded() < 2) && (author_id.equals(blue_cpt) || author_id.equals(red_cpt))) {
+						// check if there's a verification linked to this user's id
+						if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
+							ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
 
-						match.setRecorded(match.isRecorded() + 1);
+							// check if both verification requests are already handled
+							if((vos.get(1).isVerified() == vos.get(2).isVerified())){
+								QueueHelper.updateMMR(vos.get(1), vos.get(2));
 
-						if ((match != null && strArr[2].toUpperCase().equals("RED")) && match.isRecorded() == 2) {
-							match.setWinner(true);
-							matchDAO.updateMatch(match);
+							} else {
 
-							for (String player_id : match.getPlayer_ids()) {
-								if (match.getPlayer_ids().indexOf(player_id) < 6) {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, "loss");
-								} else {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, "win");
+								// find and verify a match for the captain that sent the message
+								for (VerificationObject vo : vos) {
+									if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
+										vo.setVerified(true);
+										verificationDAO.updateVerification(vo);
+										ctx.getMessage().addReaction(":white_check_mark:");
+
+										if((vos.get(1).isVerified() == vos.get(2).isVerified())){
+											TeamObject to_red = match.getTeam_red();
+											TeamObject to_blue = match.getTeam_blue();
+
+
+										}
+									}
 								}
 							}
-							ctx.getMessage().addReaction(":white_check_mark:");
-						} else if ((match != null && strArr[2].toUpperCase().equals("BLUE")) && match.isRecorded() == 2) {
-							match.setWinner(false);
-							matchDAO.updateMatch(match);
-
-							for (String player_id : match.getPlayer_ids()) {
-								if (match.getPlayer_ids().indexOf(player_id) > 5) {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, "loss");
-								} else {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, "win");
-								}
-							}
-							ctx.getMessage().addReaction(":white_check_mark:");
+						// reply if match is already reported by a captain
 						} else {
-							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " waiting for the other captain to record result.");
+							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you've already reported your result for match id: " + match.getId());
 						}
 					} else {
-						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + "the match is already recorded.");
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " this match doesn't exist");
 					}
 				})
 				.build();
@@ -420,7 +410,8 @@ public class PugBot {
 	}
 
 	private static boolean checkRoles(String id) {
-		return playerDAO.checkPrimaryRole(playerDAO.getPlayer(id));
+		PlayerObject player = playerDAO.getPlayer(id);
+		return playerDAO.checkRoles(player.getId(), player.getPrimaryRole(), player.getSecondaryRole());
 	}
 
 	private static void replyHelp(IUser user) {
@@ -456,8 +447,8 @@ public class PugBot {
 		RequestBuffer.request(() -> channel.sendMessage(builder.build()));
 	}
 
-	private static void registerPlayer(String id, String primaryRole, String secondaryRole, Long long_id) {
-		playerDAO.insertPlayer(new PlayerObject(id, primaryRole, secondaryRole,1000, long_id));
+	private static void registerPlayer(String id, String primaryRole, String secondaryRole) {
+		playerDAO.insertPlayer(new PlayerObject(id, primaryRole, secondaryRole,1000));
 	}
 
 	private static void updatePlayer(String id, String primaryRole, String secondaryRole) {
