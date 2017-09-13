@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class VerificationDAOImp implements VerificationDAO {
 
@@ -14,28 +15,29 @@ public class VerificationDAOImp implements VerificationDAO {
 	 * @see VerificationObject#getCaptain_id()
 	 *
 	 * @param match_id
-	 * @param captain_id
 	 * @return
 	 */
 	@Override
-	public VerificationObject getVerification(int match_id, String captain_id) {
+	public ArrayList<VerificationObject> getVerifications(int match_id) {
 		Connection con = ConnectionFactory.getConnection();
+		ArrayList<VerificationObject> verificationObjects = new ArrayList<>();
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT * FROM match_verification WHERE match_id=" + match_id + " AND captain_id=" + captain_id);
+					.executeQuery("SELECT * FROM match_verification WHERE match_id=" + match_id);
 
-			if (rs.next()) {
+			while (rs.next()) {
 				VerificationObject verification = new VerificationObject();
 
 				verification.setVerification_id(rs.getInt("verification_id"));
 				verification.setMatch_id(match_id);
-				verification.setCaptain_id(captain_id);
+				verification.setCaptain_id(verification.getCaptain_id());
 				verification.setVerified(rs.getBoolean("verified"));
 
-				con.close();
-				return verification;
+				verificationObjects.add(verification);
 			}
+			con.close();
+			return verificationObjects;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -51,10 +53,12 @@ public class VerificationDAOImp implements VerificationDAO {
 	 * @see VerificationObject#getMatch_id()
 	 * @see VerificationObject#getCaptain_id()
 	 *
-	 * @param verification
+	 * @param match_id
+	 * @param captain_id
+	 * @param verified
 	 */
 	@Override
-	public void insertVerification(VerificationObject verification) {
+	public void insertVerification(int match_id, String captain_id, boolean verified) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
 			PreparedStatement pst = con.prepareStatement(
@@ -64,9 +68,9 @@ public class VerificationDAOImp implements VerificationDAO {
 							+ "verified)"
 							+ "VALUES (?, ?, ?)");
 
-			pst.setInt(1, verification.getMatch_id());
-			pst.setString(2, verification.getCaptain_id());
-			pst.setBoolean(3, verification.isVerified());
+			pst.setInt(1, match_id);
+			pst.setString(2, captain_id);
+			pst.setBoolean(3, verified);
 			pst.executeUpdate();
 
 			con.close();
@@ -115,8 +119,11 @@ public class VerificationDAOImp implements VerificationDAO {
 			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE captain_id OR blue_captain= " + captain_id);
 
 			if (rs.next()) {
+				if(rs.getBoolean("verified") == false) {
+					con.close();
+					return true;
+				}
 				con.close();
-				return true;
 			} else {
 				return false;
 			}

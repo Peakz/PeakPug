@@ -7,6 +7,13 @@ import java.sql.Statement;
 
 public class TeamDAOImp implements TeamDAO {
 
+	/**
+	 * Get a team from the match that belongs to the match_id
+	 * The team's color will be the one put in the parameter
+	 * @param match_id
+	 * @param color
+	 * @return
+	 */
 	@Override
 	public TeamObject getTeam(int match_id, String color) {
 		Connection con = ConnectionFactory.getConnection();

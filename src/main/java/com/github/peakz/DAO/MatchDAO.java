@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public interface MatchDAO {
 	ArrayList<MatchObject> getAllMatches(ArrayList<MatchObject> matches);
-	MatchObject getLastMatchID();
+	int getLastMatchID();
 	MatchObject getMatch(int match_id);
 	void insertMatch(MatchObject match);
 	void updateMatch(MatchObject match);
