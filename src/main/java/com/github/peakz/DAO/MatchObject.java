@@ -12,7 +12,10 @@ public class MatchObject {
 	// true for red win, false for blue win
 	private boolean winner;
 	private String map;
-	private boolean recorded;
+	private int recorded = 0;
+
+	private int red_count = 0;
+	private int blue_count = 0;
 
 	private ArrayList<String> player_ids = new ArrayList<>();
 
@@ -73,11 +76,35 @@ public class MatchObject {
 		this.player_ids = player_ids;
 	}
 
-	public boolean isRecorded() {
+	public int isRecorded() {
 		return recorded;
 	}
 
-	public void setRecorded(boolean recorded) {
+	public void setRecorded(int recorded) {
 		this.recorded = recorded;
+	}
+
+	public boolean isWinner() {
+		return winner;
+	}
+
+	public int getRecorded() {
+		return recorded;
+	}
+
+	public int getRed_count() {
+		return red_count;
+	}
+
+	public void setRed_count(int red_count) {
+		this.red_count = red_count;
+	}
+
+	public int getBlue_count() {
+		return blue_count;
+	}
+
+	public void setBlue_count(int blue_count) {
+		this.blue_count = blue_count;
 	}
 }

@@ -110,7 +110,7 @@ public class MatchDAOImp implements MatchDAO{
 			pst.setString(12, match.getTeam_red().getPlayer_5().getId());
 
 			pst.setString(13, match.getMap());
-			pst.setBoolean(14, match.isRecorded());
+			pst.setInt(14, match.isRecorded());
 
 			pst.executeUpdate();
 
@@ -126,7 +126,7 @@ public class MatchDAOImp implements MatchDAO{
 		try {
 			PreparedStatement pst = con.prepareStatement("UPDATE pug_match SET winner = ?, recorded = ? WHERE pug_id =" + match.getId());
 			pst.setBoolean(1, match.getWinner());
-			pst.setBoolean(2, match.isRecorded());
+			pst.setInt(2, match.isRecorded());
 			pst.executeUpdate();
 			con.close();
 		} catch (Exception e) {

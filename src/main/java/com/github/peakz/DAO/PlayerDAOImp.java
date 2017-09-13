@@ -40,7 +40,7 @@ public class PlayerDAOImp implements PlayerDAO {
 	}
 
 	/**
-	 * Get the customer for the specified name
+	 * Get a player based on their id
 	 *
 	 * @param id
 	 * @return player
@@ -124,16 +124,16 @@ public class PlayerDAOImp implements PlayerDAO {
 	}
 
 	@Override
-	public void updateMMR(String id, int mmr, boolean change) {
+	public void updateMMR(String id, int mmr) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
-			if(change) {
+			if(status.equals("win")) {
 				String str = "UPDATE player SET rating = " + mmr + " WHERE id =" + id;
 
 				PreparedStatement pst = con.prepareStatement(str);
 				pst.executeUpdate(str);
 				con.close();
-			} else {
+			} else if(status.equals("loss")){
 				String str = "UPDATE player SET rating = " + mmr + " WHERE id =" + id;
 
 				PreparedStatement pst = con.prepareStatement(str);

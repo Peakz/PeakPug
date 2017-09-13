@@ -336,36 +336,45 @@ public class PugBot {
 
 					MatchDAO matchDAO = new MatchDAOImp();
 					MatchObject match = matchDAO.getMatch(strArr[1]);
-					if(match != null && !(match.isRecorded())) {
-						if (match != null && strArr[2].toUpperCase().equals("RED")) {
+
+					String blue_cpt = match.getTeam_blue().getCaptain().getId();
+					String red_cpt = match.getTeam_red().getCaptain().getId();
+					String author_id = ctx.getAuthor().getStringID();
+
+					if(ctx.getMessage().getContent().toUpperCase().equals("!RESULT " + match.getId() + " RED")){
+						match.setRed_count(1);
+					}
+
+					if((match != null && match.isRecorded() < 2) && (author_id.equals(blue_cpt) || author_id.equals(red_cpt))) {
+
+						match.setRecorded(match.isRecorded() + 1);
+
+						if ((match != null && strArr[2].toUpperCase().equals("RED")) && match.isRecorded() == 2) {
 							match.setWinner(true);
-							match.setRecorded(true);
 							matchDAO.updateMatch(match);
 
 							for (String player_id : match.getPlayer_ids()) {
 								if (match.getPlayer_ids().indexOf(player_id) < 6) {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, false);
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, "loss");
 								} else {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, true);
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, "win");
 								}
 							}
-
 							ctx.getMessage().addReaction(":white_check_mark:");
-						} else if (match != null && strArr[2].toUpperCase().equals("BLUE")) {
+						} else if ((match != null && strArr[2].toUpperCase().equals("BLUE")) && match.isRecorded() == 2) {
 							match.setWinner(false);
-							match.setRecorded(true);
 							matchDAO.updateMatch(match);
 
 							for (String player_id : match.getPlayer_ids()) {
 								if (match.getPlayer_ids().indexOf(player_id) > 5) {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, false);
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() - 25, "loss");
 								} else {
-									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, true);
+									playerDAO.updateMMR(player_id, playerDAO.getPlayer(player_id).getRating() + 25, "win");
 								}
 							}
 							ctx.getMessage().addReaction(":white_check_mark:");
 						} else {
-							ctx.getMessage().addReaction(":x:");
+							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " waiting for the other captain to record result.");
 						}
 					} else {
 						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + "the match is already recorded.");
@@ -417,11 +426,13 @@ public class PugBot {
 	private static void replyHelp(IUser user) {
 		EmbedBuilder builder = new EmbedBuilder();
 
-		builder.appendField("!Register <role_1> <role_2>", "Choose a primary and secondary role to register with.", true);
-		builder.appendField("!Update <role_1> <role_2>", "Update your current primary and secondary roles.", true);
-		builder.appendField("!Queue", "Puts you in the queue.", true);
-		builder.appendField("!Exit", "Exits the queue.", true);
-		builder.appendField("!Pick @name", "Command for captains to pick players with during pick phase.", true);
+		builder.appendField("!Register role_1 role_2", "Choose a primary and secondary role to register with.", true);
+		builder.appendField("!Update role_1 role_2", "Update your current primary and secondary roles.", true);
+		//builder.appendField("!Queue", "Puts you in the queue.", true);
+		//builder.appendField("!Exit", "Exits the queue.", true);
+		//builder.appendField("!Pick @name", "Command for captains to pick players with during pick phase.", true);
+		builder.appendField("!Result match_id winner_color (red or blue)", "Record the results from a match. Only captains can do this.", true);
+		builder.appendField("!Rating", "Display your rating.", true);
 
 		builder.withColor(185, 255, 173);
 		builder.withDescription("Roles accepted for role commands: Tank, Dps, Supp, Flex.");

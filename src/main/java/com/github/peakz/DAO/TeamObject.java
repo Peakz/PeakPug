@@ -2,6 +2,8 @@ package com.github.peakz.DAO;
 
 public class TeamObject {
 
+	private int team_id;
+	private String color;
 	private PlayerObject captain;
 	private PlayerObject player_1;
 	private PlayerObject player_2;
@@ -12,7 +14,9 @@ public class TeamObject {
 	public TeamObject() {
 	}
 
-	public TeamObject(PlayerObject captain) {
+	public TeamObject(int team_id, String color, PlayerObject captain) {
+		this.team_id = team_id;
+		this.color = color;
 		this.captain = captain;
 	}
 
@@ -23,6 +27,22 @@ public class TeamObject {
 		this.player_3 = player_3;
 		this.player_4 = player_4;
 		this.player_5 = player_5;
+	}
+
+	public int getTeam_id() {
+		return team_id;
+	}
+
+	public void setTeam_id(int team_id) {
+		this.team_id = team_id;
+	}
+
+	public String getColor() {
+		return color;
+	}
+
+	public void setColor(String color) {
+		this.color = color;
 	}
 
 	public PlayerObject getCaptain() {
