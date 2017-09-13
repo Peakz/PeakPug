@@ -7,7 +7,7 @@ public interface PlayerDAO {
 	PlayerObject getPlayer(String id);
 	void insertPlayer(PlayerObject player);
 	void updatePlayer(PlayerObject player);
-	void updateMMR(String id, int mmr, boolean change);
+	void updateMMR(String id, int mmr, String status);
 	void deletePlayer(PlayerObject player);
 	boolean checkId(String id);
 	boolean checkPrimaryRole(PlayerObject player);
