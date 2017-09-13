@@ -3,6 +3,7 @@ package com.github.peakz.DAO;
 public class TeamObject {
 
 	private int team_id;
+	private int team_players_id;
 	private String color;
 	private PlayerObject captain;
 	private PlayerObject player_1;
@@ -11,16 +12,35 @@ public class TeamObject {
 	private PlayerObject player_4;
 	private PlayerObject player_5;
 
+	/**
+	 * Empty constructor
+	 */
 	public TeamObject() {
 	}
 
+	/**
+	 * Constructor with parameters, only team_id, team color and captain
+	 *
+	 * @param team_id
+	 * @param color
+	 * @param captain
+	 */
 	public TeamObject(int team_id, String color, PlayerObject captain) {
 		this.team_id = team_id;
 		this.color = color;
 		this.captain = captain;
 	}
 
-	public TeamObject(PlayerObject captain, PlayerObject player_1, PlayerObject player_2, PlayerObject player_3, PlayerObject player_4, PlayerObject player_5) {
+	/**
+	 * Constructor for a colored team with captain and players
+	 * @param captain
+	 * @param player_1
+	 * @param player_2
+	 * @param player_3
+	 * @param player_4
+	 * @param player_5
+	 */
+	public TeamObject(String color, PlayerObject captain, PlayerObject player_1, PlayerObject player_2, PlayerObject player_3, PlayerObject player_4, PlayerObject player_5) {
 		this.captain = captain;
 		this.player_1 = player_1;
 		this.player_2 = player_2;
@@ -95,5 +115,13 @@ public class TeamObject {
 
 	public int getAvgRating() {
 		return ((captain.getRating() + player_1.getRating() + player_2.getRating() + player_3.getRating() + player_4.getRating() + player_5.getRating()) / 6);
+	}
+
+	public int getTeam_players_id() {
+		return team_players_id;
+	}
+
+	public void setTeam_players_id(int team_players_id) {
+		this.team_players_id = team_players_id;
 	}
 }

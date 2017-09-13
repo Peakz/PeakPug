@@ -6,7 +6,6 @@ public class PlayerObject {
 	private String primaryRole;
 	private String secondaryRole;
 	private int rating;
-	private long long_id;
 
 	public PlayerObject() {
 	}
@@ -26,22 +25,6 @@ public class PlayerObject {
 		this.primaryRole = primaryRole;
 		this.secondaryRole = secondaryRole;
 		this.rating = rating;
-	}
-
-	public PlayerObject(String id, String primaryRole, String secondaryRole, int rating, long long_id) {
-		this.id = id;
-		this.primaryRole = primaryRole;
-		this.secondaryRole = secondaryRole;
-		this.rating = rating;
-		this.long_id = long_id;
-	}
-
-	public long getLong_id() {
-		return long_id;
-	}
-
-	public void setLong_id(long long_id) {
-		this.long_id = long_id;
 	}
 
 	public String getId() {
