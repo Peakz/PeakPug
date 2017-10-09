@@ -3,7 +3,6 @@ package com.github.peakz.DAO;
 public class TeamObject {
 
 	private int team_id;
-	private int team_players_id;
 	private String color;
 	private PlayerObject captain;
 	private PlayerObject player_1;
@@ -115,13 +114,5 @@ public class TeamObject {
 
 	public int getAvgRating() {
 		return ((captain.getRating() + player_1.getRating() + player_2.getRating() + player_3.getRating() + player_4.getRating() + player_5.getRating()) / 6);
-	}
-
-	public int getTeam_players_id() {
-		return team_players_id;
-	}
-
-	public void setTeam_players_id(int team_players_id) {
-		this.team_players_id = team_players_id;
 	}
 }

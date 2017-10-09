@@ -218,4 +218,26 @@ public class PlayerDAOImp implements PlayerDAO {
 		}
 		return 0;
 	}
+
+	/**
+	 * Update the player's mmr
+	 *
+	 * @see PlayerObject#setRating(int)
+	 *
+	 * @param player
+	 */
+	@Override
+	public void updatePlayerMMR(PlayerObject player) {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			PreparedStatement pst = con.prepareStatement("UPDATE player SET rating = ? WHERE id =" + player.getId());
+
+			pst.setInt(1, player.getRating());
+			pst.executeUpdate();
+
+			con.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

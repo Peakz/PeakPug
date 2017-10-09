@@ -29,10 +29,10 @@ public class AnnotationListener {
 			// Using switch for future features and multiple queues
 			case "propugsQueue1":
 				if(player != null) {
-					queueHelper.addPrimaryRole(player, queueHelper);
-					if(queueHelper.checkRolesAvailable(queueHelper, event)){
-						MatchObject match = queueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper, event);
-						queueHelper.newMatchMessage(event.getVoiceChannel().getGuild(), match);
+					QueueHelper.addPrimaryRole(player, queueHelper);
+					if(QueueHelper.checkRolesAvailable(queueHelper, event)){
+						MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper, event);
+						QueueHelper.newMatchMessage(event.getVoiceChannel().getGuild(), match);
 						MatchDAO matchDAO = new MatchDAOImp();
 						matchDAO.insertMatch(match);
 
