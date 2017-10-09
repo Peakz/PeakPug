@@ -10,6 +10,7 @@ public class TeamDAOImp implements TeamDAO {
 	/**
 	 * Get a team from the match that belongs to the match_id
 	 * The team's color will be the one put in the parameter
+	 *
 	 * @param match_id
 	 * @param color
 	 * @return
@@ -27,8 +28,13 @@ public class TeamDAOImp implements TeamDAO {
 				PlayerDAO playerDAO = new PlayerDAOImp();
 
 				team.setTeam_id(rs.getInt("team_id"));
-				team.setCaptain(playerDAO.getPlayer(rs.getString("captain")));
 				team.setColor(rs.getString("color"));
+				team.setCaptain(playerDAO.getPlayer(rs.getString("captain")));
+				team.setPlayer_1(playerDAO.getPlayer(rs.getString("player_1_id")));
+				team.setPlayer_2(playerDAO.getPlayer(rs.getString("player_2_id")));
+				team.setPlayer_3(playerDAO.getPlayer(rs.getString("player_3_id")));
+				team.setPlayer_4(playerDAO.getPlayer(rs.getString("player_4_id")));
+				team.setPlayer_5(playerDAO.getPlayer(rs.getString("player_5_id")));
 
 				con.close();
 				return team;
@@ -58,7 +64,7 @@ public class TeamDAOImp implements TeamDAO {
 					+ "player_5_id)"
 					+ "VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-			pst.setString(1, team.getColor());
+			pst.setString(1, team.getColor().toUpperCase());
 			pst.setString(2, team.getCaptain().getId());
 			pst.setString(3, team.getPlayer_1().getId());
 			pst.setString(4, team.getPlayer_2().getId());

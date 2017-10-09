@@ -327,47 +327,56 @@ public class PugBot {
 						i++;
 					}
 
-					// create a MatchObject and get the match for the match id that's typed in.
-					MatchDAO matchDAO = new MatchDAOImp();
-					MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
+					// check team color in the command
+					if(strArr[2].toUpperCase().equals("RED") || strArr[2].toUpperCase().equals("BLUE")) {
+						// create a MatchObject and get the match for the match id that's typed in.
+						MatchDAO matchDAO = new MatchDAOImp();
+						MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
 
-					// check if the match exists
-					if(match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
+						// check if the match exists
+						if (match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
+							VerificationDAO verificationDAO = new VerificationDAOImp();
 
-						VerificationDAO verificationDAO = new VerificationDAOImp();
+							// check if there's a verification linked to this user's id
+							if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
+								ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
 
-						// check if there's a verification linked to this user's id
-						if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
-							ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
-
-							// check if both verification requests are already handled
-							if((vos.get(1).isVerified() == vos.get(2).isVerified())){
-								QueueHelper.updateMMR(vos.get(1), vos.get(2));
-
-							} else {
-
-								// find and verify a match for the captain that sent the message
-								for (VerificationObject vo : vos) {
-									if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
-										vo.setVerified(true);
-										verificationDAO.updateVerification(vo);
-										ctx.getMessage().addReaction(":white_check_mark:");
-
-										if((vos.get(1).isVerified() == vos.get(2).isVerified())){
-											TeamObject to_red = match.getTeam_red();
-											TeamObject to_blue = match.getTeam_blue();
-
-
+								// check if both verification requests are already handled
+								if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
+									ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " match is already verified");
+								} else {
+									// find and verify a match for the captain that sent the message
+									for (VerificationObject vo : vos) {
+										if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
+											// check first if there's a mismatch in verifications or if there's no verification at all
+											if ((match.getWinner() != null && strArr[2].toUpperCase().equals(match.getWinner())) || (match.getWinner() == null)) {
+												vo.setVerified(true);
+												verificationDAO.updateVerification(vo);
+												ctx.getMessage().addReaction(":white_check_mark:");
+											} else {
+												// reply if there's a mismatch in team colors reported by the two captains
+												ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
+											}
+										}
+									}
+									// check if both verifications are valid once again and if so, proceed to update mmr accordingly
+									if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
+										if(QueueHelper.updateMMR(vos.get(1), vos.get(2), match.getWinner())) {
+											ctx.getMessage().getChannel().sendMessage("Updated the match: " + match.getId() + " and each player's MMR");
 										}
 									}
 								}
+								// reply if match is already reported by a captain
+							} else {
+								ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not captain for the match id: " + match.getId());
 							}
-						// reply if match is already reported by a captain
+							// reply if the match doesn't exist
 						} else {
-							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you've already reported your result for match id: " + match.getId());
+							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " this match doesn't exist");
 						}
+						// reply if there's an attempt to report a team color other than red or blue
 					} else {
-						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " this match doesn't exist");
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " try typing in the winning team color again. Either \"Red\" or \"Blue\"");
 					}
 				})
 				.build();

@@ -408,7 +408,60 @@ public class QueueHelper {
 		RequestBuffer.request(() -> guild.getChannelsByName("propugs").get(0).copy().sendMessage(builder.build()));
 	}
 
-	public static void updateMMR(VerificationObject v_red, VerificationObject v_blue){
+	public static boolean updateMMR(VerificationObject v_red, VerificationObject v_blue, String winner){
+		if(v_red.isVerified() && v_blue.isVerified()) {
+			MatchDAO matchDAOImp = new MatchDAOImp();
+			MatchObject mo = matchDAOImp.getMatch(v_blue.getMatch_id());
 
+			TeamDAO teamDAO = new TeamDAOImp();
+			TeamObject t_red = teamDAO.getTeam(v_red.getMatch_id(), "RED");
+			TeamObject t_blue = teamDAO.getTeam(v_blue.getMatch_id(), "BLUE");
+
+			PlayerDAO playerDAO = new PlayerDAOImp();
+
+			PlayerObject[] players = new PlayerObject[] {
+					t_red.getCaptain(),
+					t_red.getPlayer_1(),
+					t_red.getPlayer_2(),
+					t_red.getPlayer_3(),
+					t_red.getPlayer_4(),
+					t_red.getPlayer_5(),
+
+					t_blue.getCaptain(),
+					t_blue.getPlayer_1(),
+					t_blue.getPlayer_2(),
+					t_blue.getPlayer_3(),
+					t_blue.getPlayer_4(),
+					t_blue.getPlayer_5()
+			};
+
+			switch(winner.toUpperCase()) {
+				case "RED":
+					for(int i = 0; i < players.length; i++) {
+						if(i < 5) {
+							players[i].setRating(players[i].getRating() + 20);
+							playerDAO.updatePlayer(players[i]);
+						} else {
+							players[i].setRating(players[i].getRating() - 20);
+							playerDAO.updatePlayer(players[i]);
+						}
+					}
+					return true;
+				case "BLUE":
+					for(int i = 0; i < players.length; i++) {
+						if(i < 5) {
+							players[i].setRating(players[i].getRating() - 20);
+							playerDAO.updatePlayer(players[i]);
+						} else {
+							players[i].setRating(players[i].getRating() + 20);
+							playerDAO.updatePlayer(players[i]);
+						}
+					}
+					return true;
+				default:
+					return false;
+			}
+		}
+		return false;
 	}
 }

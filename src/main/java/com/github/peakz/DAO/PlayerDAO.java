@@ -11,4 +11,5 @@ public interface PlayerDAO {
 	boolean checkId(String player_id);
 	boolean checkRoles(String player_id, String primaryRole, String secondaryRole);
 	int checkMMR(String player_id);
+	void updatePlayerMMR(PlayerObject player);
 }
