@@ -30,6 +30,10 @@ public class PugBot {
 	private static PlayerDAO playerDAO = new PlayerDAOImp();
 	private static int antiRNG = 0;
 
+	private static QueueHelper queueHelper = new QueueHelper();
+	private static ArrayList<PlayerObject> temp_team_red = new ArrayList<>();
+	private static ArrayList<PlayerObject> temp_team_blue = new ArrayList<>();
+
 	public PugBot(IDiscordClient client) {
 		this.client = client; // Sets the client instance to the one provided
 	}
@@ -177,45 +181,54 @@ public class PugBot {
 				})
 				.build();
 
-		Command queue = Command.builder()
+		Command add = Command.builder()
 				.onCalled(ctx -> {
-					/**String id = ctx.getAuthor().getStringID();
-					if  (allowRegister) {
-						if (allPlayers.size() < 14) {
-							if (playerDAO.checkId(id)) {
-								PlayerObject player;
-								player = playerDAO.getPlayer(id);
-								if (player.getPrimaryRole().equals(null) || player.getSecondaryRole().equals(null)) {
-									ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you cannot queue until you've specified roles.");
-								} else {
-									player.setLong_id(ctx.getAuthor().getLongID());
-									queuePlayer(player);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-							} else {
-								ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you haven't registered yet. Type !Help for help.");
+					String id = ctx.getAuthor().getStringID();
+					PlayerObject player = playerDAO.getPlayer(id);
+
+					if(player != null && (player.getPrimaryRole() != null || player.getSecondaryRole() != null)) {
+						if (QueueHelper.isQueued(player, queueHelper)) {
+							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already added!");
+						} else if (queueHelper.getPlayers().size() < 12){
+							QueueHelper.addPrimaryRole(player, queueHelper);
+							ctx.getMessage().addReaction(":white_check_mark:");
+							if (QueueHelper.checkRolesAvailable(queueHelper) && queueHelper.getPlayers().size() > 12) {
+								MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper);
+								MatchDAO matchDAO = new MatchDAOImp();
+								matchDAO.insertMatch(match);
+								match.setId(matchDAO.getLastMatchID());
+
+								EmbedBuilder builder = new EmbedBuilder();
+
+								builder.appendField("RED TEAM MMR: " + match.getTeam_red().getAvgRating(), "Captain: " +
+										ctx.getGuild().getUserByID(
+												Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
+
+								builder.appendField("BLUE TEAM MMR: " + match.getTeam_blue().getAvgRating(), "Captain: " +
+										ctx.getGuild().getUserByID(
+												Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
+
+								builder.withColor(0, 153, 255);
+								builder.withDescription("MAP - " + match.getMap());
+								builder.withTitle("MATCH ID: " + matchDAO.getLastMatchID());
+
+								builder.withFooterText("EACH CAPTAIN MUST REPORT RESULTS AFTER THE MATCH, \"!Result match_id team_color\"");
+								builder.withThumbnail(PugBot.getMapImg(match.getMap()));
+								RequestBuffer.request(() -> ctx.getGuild().getChannelsByName("pugs").get(0).copy().sendMessage(builder.build()));
+
+								// create new VerificationObject for the match
+								VerificationDAO verificationDAO = new VerificationDAOImp();
+
+								// create verification for team red, false by default
+								verificationDAO.insertVerification(match.getId(), match.getTeam_red().getCaptain().getId(), false);
+
+								// create verification for team blue, false by default
+								verificationDAO.insertVerification(match.getId(), match.getTeam_blue().getCaptain().getId(), false);
+
+								queueHelper = new QueueHelper();
 							}
 						}
-
-						if (allPlayers.size() == 14) {
-							allowRegister = false;
-							selectedMap = selectMap();
-							Random random = new Random();
-
-							PlayerObject captain_1 = allPlayers.get(random.nextInt(13));
-							allPlayers.remove(captain_1);
-							red[0] = captain_1;
-
-							PlayerObject captain_2 = allPlayers.get(random.nextInt(12));
-							allPlayers.remove(captain_2);
-							blue[0] = captain_2;
-
-							poolBuilder(ctx.getChannel());
-						}
-					} else {
-						ctx.getChannel().sendMessage("Pick phase already in progress.");
 					}
-					 */
 				})
 				.build();
 
@@ -300,17 +313,33 @@ public class PugBot {
 				})
 				.build();
 
-		Command exit = Command.builder()
+		Command remove = Command.builder()
 				.onCalled(ctx -> {
-					/**
 					PlayerObject player = playerDAO.getPlayer(ctx.getAuthor().getStringID());
-					if (allPlayers.contains(player)) {
-						allPlayers.remove(player);
+					if(queueHelper.getPlayers().size() == 1){
+						// If the queue becomes empty, the whole queue helper is renewed
+						queueHelper.setPlayers(new ArrayList<>());
 						ctx.getMessage().addReaction(":white_check_mark:");
-					}
 
-					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're not queued.");
-					 */
+					} else if (QueueHelper.isQueued(player, queueHelper)){
+						// Removes the player from the queue if it contains at least 1 player
+						queueHelper.getPlayers().remove(player);
+						ctx.getMessage().addReaction(":white_check_mark:");
+						// Checks primary role queue and removes the player from the list they're in
+						if(queueHelper.getTanks().contains(player)){
+							queueHelper.getTanks().remove(player);
+							ctx.getMessage().addReaction(":white_check_mark:");
+						} else if (queueHelper.getDps().contains(player)){
+							queueHelper.getDps().remove(player);
+							ctx.getMessage().addReaction(":white_check_mark:");
+						} else if (queueHelper.getSupps().contains(player)){
+							queueHelper.getSupps().remove(player);
+							ctx.getMessage().addReaction(":white_check_mark:");
+						} else if (queueHelper.getFlexes().contains(player)){
+							queueHelper.getFlexes().remove(player);
+							ctx.getMessage().addReaction(":white_check_mark:");
+						}
+					}
 				})
 				.build();
 
@@ -389,8 +418,28 @@ public class PugBot {
 
 		Command help = Command.builder()
 				.onCalled(ctx -> {
-					replyHelp(ctx.getAuthor());
-					ctx.getMessage().addReaction(":white_check_mark:");
+					EmbedBuilder builder = new EmbedBuilder();
+					builder.appendField("!Update role_1 role_2", "Update current primary and secondary role", false);
+					builder.appendField("!Add", "Queue up", true);
+					builder.appendField("!Remove", "Exit queue", true);
+					builder.appendField("!Result match_id winner_color (red or blue)", "Captain command to record result from a match", false);
+					builder.appendField("!Rating", "Your rating", true);
+					builder.appendField("!Status", "Queue status", true);
+
+					builder.withColor(185, 255, 173);
+					builder.withDescription("Register primary and secondary role");
+					builder.withTitle("!Register role_1 role_2");
+					ctx.getMessage().getChannel().sendMessage(builder.build());
+				})
+				.build();
+
+		Command status = Command.builder()
+				.onCalled(ctx -> {
+					if(queueHelper.getPlayers().size() == 1) {
+						ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " player in queue");
+					} else {
+						ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " players in queue");
+					}
 				})
 				.build();
 
@@ -400,19 +449,25 @@ public class PugBot {
 		CommandRegistry registry = new CommandRegistry("!");
 		registry.register(register, "Register");
 		registry.register(register, "register");
+
 		registry.register(update, "Update");
 		registry.register(update, "update");
+
 		registry.register(result, "Result");
 		registry.register(result, "result");
+
 		registry.register(rank, "Rating");
 		registry.register(rank, "rating");
-		/** registry.register(queue, "Queue");
-		registry.register(queue, "queue");
-		registry.register(pick, "Pick");
-		registry.register(pick, "pick");
-		registry.register(exit, "Exit");
-		registry.register(exit, "exit");
-		 */
+
+		registry.register(add, "Add");
+		registry.register(add, "add");
+
+		registry.register(remove, "Remove");
+		registry.register(remove,"remove");
+
+		registry.register(status, "Status");
+		registry.register(status, "status");
+
 		registry.register(help, "Help");
 		registry.register(help, "help");
 		client.getDispatcher().registerListener(new CommandListener(registry));
@@ -426,16 +481,16 @@ public class PugBot {
 	private static void replyHelp(IUser user) {
 		EmbedBuilder builder = new EmbedBuilder();
 
-		builder.appendField("!Register role_1 role_2", "Choose a primary and secondary role to register with.", true);
-		builder.appendField("!Update role_1 role_2", "Update your current primary and secondary roles.", true);
+		builder.appendField("!Add role_1 role_2", "Choose a primary and secondary role to register with", true);
+		builder.appendField("!Update role_1 role_2", "Update your current primary and secondary roles", true);
 		//builder.appendField("!Queue", "Puts you in the queue.", true);
 		//builder.appendField("!Exit", "Exits the queue.", true);
 		//builder.appendField("!Pick @name", "Command for captains to pick players with during pick phase.", true);
-		builder.appendField("!Result match_id winner_color (red or blue)", "Record the results from a match. Only captains can do this.", true);
+		builder.appendField("!Result match_id winner_color (red or blue)", "Record the results from a match", true);
 		builder.appendField("!Rating", "Display your rating.", true);
 
 		builder.withColor(185, 255, 173);
-		builder.withDescription("Roles accepted for role commands: Tank, Dps, Supp, Flex.");
+		builder.withDescription("Roles accepted for role commands: Tank, Dps, Supp, Flex");
 		builder.withTitle("!Help - Explained commands");
 		builder.withTimestamp(100);
 

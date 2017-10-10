@@ -1,11 +1,10 @@
 package com.github.peakz;
 
-import com.github.peakz.DAO.*;
+import com.github.peakz.DAO.PlayerDAO;
+import com.github.peakz.DAO.PlayerDAOImp;
+import com.github.peakz.DAO.PlayerObject;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
-import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelJoinEvent;
-import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelLeaveEvent;
-import sx.blah.discord.handle.obj.IVoiceChannel;
 
 import java.util.ArrayList;
 
@@ -21,7 +20,7 @@ public class AnnotationListener {
 		event.getClient().changePlayingText("propugs");
 	}
 
-	@EventSubscriber
+	/**@EventSubscriber
 	public void onUserJoinVoiceChannelEvent(UserVoiceChannelJoinEvent event) {
 		IVoiceChannel channel = event.getVoiceChannel();
 		PlayerObject player = playerDAO.getPlayer(event.getUser().getStringID());
@@ -30,8 +29,8 @@ public class AnnotationListener {
 			case "propugsQueue1":
 				if(player != null) {
 					QueueHelper.addPrimaryRole(player, queueHelper);
-					if(QueueHelper.checkRolesAvailable(queueHelper, event)){
-						MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper, event);
+					if(QueueHelper.checkRolesAvailable(queueHelper)){
+						MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper);
 						QueueHelper.newMatchMessage(event.getVoiceChannel().getGuild(), match);
 						MatchDAO matchDAO = new MatchDAOImp();
 						matchDAO.insertMatch(match);
@@ -87,5 +86,5 @@ public class AnnotationListener {
 			default:
 				break;
 		}
-	}
+	}*/
 }
