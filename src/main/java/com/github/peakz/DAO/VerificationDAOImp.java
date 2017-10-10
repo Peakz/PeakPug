@@ -20,24 +20,52 @@ public class VerificationDAOImp implements VerificationDAO {
 	@Override
 	public ArrayList<VerificationObject> getVerifications(int match_id) {
 		Connection con = ConnectionFactory.getConnection();
-		ArrayList<VerificationObject> verificationObjects = new ArrayList<>();
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
 					.executeQuery("SELECT * FROM match_verification WHERE matchID=" + match_id);
 
+			ArrayList<VerificationObject> verificationObjects = new ArrayList<>();
 			while (rs.next()) {
 				VerificationObject verification = new VerificationObject();
 
 				verification.setVerification_id(rs.getInt("verification_id"));
 				verification.setMatch_id(match_id);
-				verification.setCaptain_id(verification.getCaptain_id());
+				verification.setCaptain_id(rs.getString("captain_id"));
 				verification.setVerified(rs.getBoolean("verified"));
 
 				verificationObjects.add(verification);
 			}
 			con.close();
 			return verificationObjects;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
+	public VerificationObject getVerification(int match_id, String captain_id) {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st
+					.executeQuery("SELECT * FROM match_verification WHERE matchID=" + match_id + " AND captain_id =" + captain_id);
+
+			if(rs.next()) {
+				VerificationObject verification = new VerificationObject();
+
+				verification.setVerification_id(rs.getInt("verification_id"));
+				verification.setMatch_id(match_id);
+				verification.setCaptain_id(rs.getString("captain_id"));
+				verification.setVerified(rs.getBoolean("verified"));
+
+				con.close();
+				return verification;
+			} else {
+				con.close();
+				return null;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -93,7 +121,7 @@ public class VerificationDAOImp implements VerificationDAO {
 	public void updateVerification(VerificationObject verification) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
-			PreparedStatement pst = con.prepareStatement("UPDATE match_verification SET verified = ? WHERE match_verification.matchID=" + verification.getMatch_id() + " AND captain_id=" + verification.getCaptain_id());
+			PreparedStatement pst = con.prepareStatement("UPDATE match_verification SET verified = ? WHERE match_verification.matchID=" + verification.getMatch_id() + " AND match_verification.captain_id=" + verification.getCaptain_id());
 
 			pst.setBoolean(1, verification.isVerified());
 			pst.executeUpdate();
@@ -111,25 +139,67 @@ public class VerificationDAOImp implements VerificationDAO {
 	 * @return
 	 */
 	@Override
-	public boolean checkCaptain(String captain_id) {
+	public boolean checkCaptain(int match_id, String captain_id) {
 		Connection con = ConnectionFactory.getConnection();
 		boolean verified;
 		try {
 			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE captain_id OR blue_captain= " + captain_id);
+			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE captain_id = " + captain_id + " AND matchID =" + match_id);
 
-			if (rs.next()) {
+			if(rs.next()) {
 				if(rs.getBoolean("verified") == false) {
 					con.close();
 					return true;
 				}
 				con.close();
+				return false;
 			} else {
+				con.close();
 				return false;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return false;
+	}
+
+	@Override
+	public boolean checkBothVerifications(int match_id) {
+		Connection con = ConnectionFactory.getConnection();
+		Boolean[] verified = new Boolean[2];
+		int i = 0;
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE matchID = " + match_id);
+
+			while(rs.next()) {
+				verified[i] = rs.getBoolean("verified");
+				i++;
+			}
+			con.close();
+
+			return verified[0] != false && verified[1] != false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	public String getWinner(int match_id) {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT winner FROM pug_match WHERE matchID = " + match_id);
+
+			if(rs.next()){
+				String winner = rs.getString("winner");
+				con.close();
+				return winner;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
