@@ -1,13 +1,12 @@
 package com.github.peakz;
 
 import com.darichey.discord.Command;
+import com.darichey.discord.CommandContext;
 import com.darichey.discord.CommandListener;
 import com.darichey.discord.CommandRegistry;
 import com.github.peakz.DAO.*;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.EmbedBuilder;
 import sx.blah.discord.util.RequestBuffer;
@@ -16,11 +15,9 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class PugBot {
-	public IDiscordClient client; // The instance of the discord client.
+	private IDiscordClient client; // The instance of the discord client.
 
-	/**
-	 * String arrays of each game mode and its respective maps.
-	 */
+	// String arrays of each game mode and its respective maps.
 	private static String [] ESCORT = {"Dorado", "Route 66", "Watchpoint: Gibraltar"};
 	private static String [] HYBRID = {"Eichenwalde", "Hollywood", "King's Row", "Numbani"};
 	private static String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
@@ -38,10 +35,8 @@ public class PugBot {
 		this.client = client; // Sets the client instance to the one provided
 	}
 
-	/**
-	 * A custom login() method to handle all of the possible exceptions and set the bot instance.
-	 */
-	public static IDiscordClient createClient(String token, boolean login) { // Returns a new instance of the Discord client
+	// A custom login() method to handle all of the possible exceptions and set the bot instance.
+	static IDiscordClient createClient(String token, boolean login) { // Returns a new instance of the Discord client
 		ClientBuilder clientBuilder = new ClientBuilder(); // Creates the ClientBuilder instance
 		clientBuilder.withToken(token); // Adds the login info to the builder
 		try {
@@ -56,396 +51,33 @@ public class PugBot {
 		}
 	}
 
-	public static void createCommands(IDiscordClient client) {
-		Command register = Command.builder()
-				.onCalled(ctx -> {
-					IUser user = ctx.getAuthor();
-					String id = user.getStringID();
+	static void createCommands(IDiscordClient client) {
+		Command register = Command.builder().onCalled(PugBot::RegisterCommand).build();
 
-					if(playerDAO.checkId(id)){
-						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're already registered.");
-					} else {
+		// Create command for updating roles in a player profile
+		Command update = Command.builder().onCalled(PugBot::UpdateCommand).build();
 
-						/** Split the string into 3 parts
-						 *  1. The command
-						 *  2. Primary role
-						 *  3. Secondary role
-						 */
-						String[] strArr = new String[3];
-						int i = 0;
+		Command add = Command.builder().onCalled(PugBot::AddCommand).build();
 
-						/**
-						 * Store the split strings
-						 */
-						for(String val : ctx.getMessage().getContent().split(" ", 3)) {
-							strArr[i] = val;
-							i++;
-						}
+		Command remove = Command.builder().onCalled(PugBot::RemoveCommand).build();
 
-						/**
-						 * Switch statement for different cases
-						 */
-						switch((strArr[1].toUpperCase())) {
-							case "TANK":
-								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "SUPP":
-								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("TANK")) {
-									registerPlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "FLEX":
-								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "DPS":
-								if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									registerPlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							default:
-								ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " try again.");
-								break;
-						}
-					}
-				})
-				.build();
-
-		/**
-		 * Create command for updating roles in a player profile
-		 */
-		Command update = Command.builder()
-				.onCalled(ctx -> {
-					IUser user = ctx.getAuthor();
-					String id = user.getStringID();
-
-					/** Split the string into 3 parts
-					 *  1. The command
-					 *  2. Primary role
-					 *  3. Secondary role
-					 */
-					String[] strArr = new String[3];
-					int i = 0;
-
-					/**
-					 * Store the split strings
-					 */
-					for(String val : ctx.getMessage().getContent().split(" ", 3)) {
-						strArr[i] = val;
-						i++;
-					}
-
-					/**
-					 * Check if player exists and then switch statement for different cases
-					 */
-					if(playerDAO.checkId(id)) {
-						switch (strArr[1].toUpperCase()) {
-							case "TANK":
-								if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									updatePlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "DPS":
-								if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
-									updatePlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "FLEX":
-								if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("SUPP")) {
-									updatePlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							case "SUPP":
-								if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("FLEX")) {
-									updatePlayer(id, strArr[1], strArr[2]);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								}
-								break;
-							default:
-								ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " try again.");
-								break;
-						}
-					} else {
-						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're not registered. Try again.");
-					}
-				})
-				.build();
-
-		Command add = Command.builder()
-				.onCalled(ctx -> {
-					String id = ctx.getAuthor().getStringID();
-					PlayerObject player = playerDAO.getPlayer(id);
-
-					if(player != null && (player.getPrimaryRole() != null || player.getSecondaryRole() != null)) {
-						if (QueueHelper.isQueued(player, queueHelper)) {
-							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already added!");
-						} else if (queueHelper.getPlayers().size() < 12){
-							QueueHelper.addPrimaryRole(player, queueHelper);
-							ctx.getMessage().addReaction(":white_check_mark:");
-							if (QueueHelper.checkRolesAvailable(queueHelper) && queueHelper.getPlayers().size() > 12) {
-								MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper);
-								MatchDAO matchDAO = new MatchDAOImp();
-								matchDAO.insertMatch(match);
-								match.setId(matchDAO.getLastMatchID());
-
-								EmbedBuilder builder = new EmbedBuilder();
-
-								builder.appendField("RED TEAM MMR: " + match.getTeam_red().getAvgRating(), "Captain: " +
-										ctx.getGuild().getUserByID(
-												Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
-
-								builder.appendField("BLUE TEAM MMR: " + match.getTeam_blue().getAvgRating(), "Captain: " +
-										ctx.getGuild().getUserByID(
-												Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
-
-								builder.withColor(0, 153, 255);
-								builder.withDescription("MAP - " + match.getMap());
-								builder.withTitle("MATCH ID: " + matchDAO.getLastMatchID());
-
-								builder.withFooterText("EACH CAPTAIN MUST REPORT RESULTS AFTER THE MATCH, \"!Result match_id team_color\"");
-								builder.withThumbnail(PugBot.getMapImg(match.getMap()));
-								RequestBuffer.request(() -> ctx.getGuild().getChannelsByName("pugs").get(0).copy().sendMessage(builder.build()));
-
-								// create new VerificationObject for the match
-								VerificationDAO verificationDAO = new VerificationDAOImp();
-
-								// create verification for team red, false by default
-								verificationDAO.insertVerification(match.getId(), match.getTeam_red().getCaptain().getId(), false);
-
-								// create verification for team blue, false by default
-								verificationDAO.insertVerification(match.getId(), match.getTeam_blue().getCaptain().getId(), false);
-
-								queueHelper = new QueueHelper();
-							}
-						}
-					}
-				})
-				.build();
-
-		Command pick = Command.builder()
-				.onCalled(ctx -> {
-					/**
-
-					IGuild guild = ctx.getGuild();
-					IUser user = guild.getUserByID(ctx.getMessage().getMentions().get(0).getLongID());
-
-					switch (turnToPick) {
-						case 0:
-						case 2:
-						case 4:
-						case 6:
-						case 8:
-							if (ctx.getAuthor().getLongID() == red[0].getLong_id()) {
-								String[] strArr = new String[2];
-								int i = 0;
-
-								for(String val : ctx.getMessage().getContent().split(" @", 2)) {
-									strArr[i] = val;
-									i++;
-								}
-
-								int j = 1;
-
-								for (PlayerObject player : allPlayers) {
-									if (player.getId().equals(strArr[1])) {
-										allPlayers.remove(player);
-										red[j] = player;
-										ctx.getMessage().addReaction(":white_check_mark:");
-										turnToPick++;
-										break;
-									} else {
-										ctx.getChannel().sendMessage((strArr[1]) + " is already picked! Try agian.");
-									}
-									j++;
-								}
-							}
-							break;
-
-						case 1:
-						case 3:
-						case 5:
-						case 7:
-						case 9:
-							if (ctx.getAuthor().getLongID() == blue[0].getLong_id()) {
-								String[] strArr = new String[2];
-								int i = 0;
-
-								for(String val : ctx.getMessage().getContent().split(" @", 2)) {
-									strArr[i] = val;
-									i++;
-								}
-
-								int j = 1;
-
-								for (PlayerObject player : allPlayers) {
-									if (player.getId().equals(user.getStringID())) {
-										allPlayers.remove(player);
-										blue[j] = player;
-										ctx.getMessage().addReaction(":white_check_mark:");
-										turnToPick++;
-										break;
-									} else {
-										ctx.getChannel().sendMessage((strArr[1]) + " is already picked! Try agian.");
-									}
-									j++;
-								}
-							}
-							break;
-						case 10:
-							ctx.getChannel().sendMessage("**TEAMS READY, GL HF**");
-							allowRegister = true;
-							allPlayers.clear();
-							red = new PlayerObject[5];
-							blue = new PlayerObject[5];
-							break;
-					}
-					 */
-				})
-				.build();
-
-		Command remove = Command.builder()
-				.onCalled(ctx -> {
-					PlayerObject player = playerDAO.getPlayer(ctx.getAuthor().getStringID());
-					if(queueHelper.getPlayers().size() == 1){
-						// If the queue becomes empty, the whole queue helper is renewed
-						queueHelper.setPlayers(new ArrayList<>());
-						ctx.getMessage().addReaction(":white_check_mark:");
-
-					} else if (QueueHelper.isQueued(player, queueHelper)){
-						// Removes the player from the queue if it contains at least 1 player
-						queueHelper.getPlayers().remove(player);
-						ctx.getMessage().addReaction(":white_check_mark:");
-						// Checks primary role queue and removes the player from the list they're in
-						if(queueHelper.getTanks().contains(player)){
-							queueHelper.getTanks().remove(player);
-							ctx.getMessage().addReaction(":white_check_mark:");
-						} else if (queueHelper.getDps().contains(player)){
-							queueHelper.getDps().remove(player);
-							ctx.getMessage().addReaction(":white_check_mark:");
-						} else if (queueHelper.getSupps().contains(player)){
-							queueHelper.getSupps().remove(player);
-							ctx.getMessage().addReaction(":white_check_mark:");
-						} else if (queueHelper.getFlexes().contains(player)){
-							queueHelper.getFlexes().remove(player);
-							ctx.getMessage().addReaction(":white_check_mark:");
-						}
-					}
-				})
-				.build();
-
-		Command result = Command.builder()
-				.onCalled(ctx -> {
-					String[] strArr = new String[3];
-					int i = 0;
-
-					/**
-					 * Store the split strings
-					 */
-					for(String val : ctx.getMessage().getContent().split(" ", 3)) {
-						strArr[i] = val;
-						i++;
-					}
-
-					// check team color in the command
-					if(strArr[2].toUpperCase().equals("RED") || strArr[2].toUpperCase().equals("BLUE")) {
-						// create a MatchObject and get the match for the match id that's typed in.
-						MatchDAO matchDAO = new MatchDAOImp();
-						MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
-
-						// check if the match exists
-						if (match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
-							VerificationDAO verificationDAO = new VerificationDAOImp();
-
-							// check if there's a verification linked to this user's id
-							if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
-								ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
-
-								// check if both verification requests are already handled
-								if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
-									ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " match is already verified");
-								} else {
-									// find and verify a match for the captain that sent the message
-									for (VerificationObject vo : vos) {
-										if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
-											// check first if there's a mismatch in verifications or if there's no verification at all
-											if ((match.getWinner() != null && strArr[2].toUpperCase().equals(match.getWinner())) || (match.getWinner() == null)) {
-												vo.setVerified(true);
-												verificationDAO.updateVerification(vo);
-												ctx.getMessage().addReaction(":white_check_mark:");
-											} else {
-												// reply if there's a mismatch in team colors reported by the two captains
-												ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
-											}
-										}
-									}
-									// check if both verifications are valid once again and if so, proceed to update mmr accordingly
-									if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
-										if(QueueHelper.updateMMR(vos.get(1), vos.get(2), match.getWinner())) {
-											ctx.getMessage().getChannel().sendMessage("Updated the match: " + match.getId() + " and each player's MMR");
-										}
-									}
-								}
-								// reply if match is already reported by a captain
-							} else {
-								ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not captain for the match id: " + match.getId());
-							}
-							// reply if the match doesn't exist
-						} else {
-							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " this match doesn't exist");
-						}
-						// reply if there's an attempt to report a team color other than red or blue
-					} else {
-						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " try typing in the winning team color again. Either \"Red\" or \"Blue\"");
-					}
-				})
-				.build();
+		Command result = Command.builder().onCalled(PugBot::ResultCommand).build();
 
 		Command rank = Command.builder()
-				.onCalled(ctx -> {
-					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you rating is " + playerDAO.getPlayer(ctx.getAuthor().getStringID()).getRating());
-				})
+				.onCalled(ctx -> ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you rating is " + playerDAO.getPlayer(ctx.getAuthor().getStringID()).getRating()))
 				.build();
 
-		Command help = Command.builder()
-				.onCalled(ctx -> {
-					EmbedBuilder builder = new EmbedBuilder();
-					builder.appendField("!Update role_1 role_2", "Update current primary and secondary role", false);
-					builder.appendField("!Add", "Queue up", true);
-					builder.appendField("!Remove", "Exit queue", true);
-					builder.appendField("!Result match_id winner_color (red or blue)", "Captain command to record result from a match", false);
-					builder.appendField("!Rating", "Your rating", true);
-					builder.appendField("!Status", "Queue status", true);
+		Command help = Command.builder().onCalled(PugBot::HelpCommand).build();
 
-					builder.withColor(185, 255, 173);
-					builder.withDescription("Register primary and secondary role");
-					builder.withTitle("!Register role_1 role_2");
-					ctx.getMessage().getChannel().sendMessage(builder.build());
-				})
-				.build();
-
-		Command status = Command.builder()
-				.onCalled(ctx -> {
+		Command status = Command.builder().onCalled(ctx -> {
 					if(queueHelper.getPlayers().size() == 1) {
 						ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " player in queue");
 					} else {
 						ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " players in queue");
 					}
-				})
-				.build();
+				}).build();
 
-		/**
-		 * Register the commands
-		 */
+		// Register the commands
 		CommandRegistry registry = new CommandRegistry("!");
 		registry.register(register, "Register");
 		registry.register(register, "register");
@@ -473,42 +105,296 @@ public class PugBot {
 		client.getDispatcher().registerListener(new CommandListener(registry));
 	}
 
-	private static boolean checkRoles(String id) {
-		PlayerObject player = playerDAO.getPlayer(id);
-		return playerDAO.checkRoles(player.getId(), player.getPrimaryRole(), player.getSecondaryRole());
+	private static void RegisterCommand(CommandContext ctx) {
+		String id = ctx.getAuthor().getStringID();
+
+		if(playerDAO.checkId(id)){
+			ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're already registered.");
+		} else {
+
+			/*
+			Split the string into 3 parts
+			1. The command
+			2. Primary role
+			3. Secondary role
+			 */
+			String[] strArr = new String[3];
+			int i = 0;
+
+			// Store the split strings
+			for(String val : ctx.getMessage().getContent().split(" ", 3)) {
+				strArr[i] = val;
+				i++;
+			}
+
+			// if index 1 is null, we set the value to a new arbitrary value so trigger the switch default case
+			if(strArr[1] == null) {
+				strArr[1] = "nope";
+			}
+
+			// if index 2 is null, we set the value to a new arbitrary value so trigger the switch default case
+			if(strArr[2] == null) {
+				strArr[2] = "nope";
+			}
+
+			// Switch statement for different cases
+			switch((strArr[1].toUpperCase())) {
+				case "TANK":
+					if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
+						registerPlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "SUPP":
+					if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("TANK")) {
+						registerPlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "FLEX":
+					if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("SUPP")) {
+						registerPlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "DPS":
+					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
+						registerPlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				default:
+					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " something went wrong, try again.");
+					break;
+			}
+		}
 	}
 
-	private static void replyHelp(IUser user) {
-		EmbedBuilder builder = new EmbedBuilder();
+	private static void UpdateCommand(CommandContext ctx) {
+		String id = ctx.getAuthor().getStringID();
 
-		builder.appendField("!Add role_1 role_2", "Choose a primary and secondary role to register with", true);
-		builder.appendField("!Update role_1 role_2", "Update your current primary and secondary roles", true);
-		//builder.appendField("!Queue", "Puts you in the queue.", true);
-		//builder.appendField("!Exit", "Exits the queue.", true);
-		//builder.appendField("!Pick @name", "Command for captains to pick players with during pick phase.", true);
-		builder.appendField("!Result match_id winner_color (red or blue)", "Record the results from a match", true);
-		builder.appendField("!Rating", "Display your rating.", true);
+		/*
+		Split the string into 3 parts
+		1. The command
+		2. Primary role
+		3. Secondary role
+		 */
+		String[] strArr = new String[3];
+		int i = 0;
+
+		// Store the split strings
+		for(String val : ctx.getMessage().getContent().split(" ", 3)) {
+			strArr[i] = val;
+			i++;
+		}
+
+		// if index 1 is null, we set the value to a new arbitrary value so trigger the switch default case
+		if(strArr[1] == null) {
+			strArr[1] = "nope";
+		}
+
+		// if index 2 is null, we set the value to a new arbitrary value so trigger the switch default case
+		if(strArr[2] == null) {
+			strArr[2] = "nope";
+		}
+
+		// Check if player exists and then switch statement for different cases
+		if(playerDAO.checkId(id)) {
+			switch (strArr[1].toUpperCase()) {
+				case "TANK":
+					if (strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
+						updatePlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "DPS":
+					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("SUPP")) {
+						updatePlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "FLEX":
+					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("DPS") || strArr[2].toUpperCase().equals("SUPP")) {
+						updatePlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				case "SUPP":
+					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("FLEX")) {
+						updatePlayer(id, strArr[1], strArr[2]);
+						ctx.getMessage().addReaction(":white_check_mark:");
+					}
+					break;
+
+				default:
+					ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " something went wrong, try again.");
+					break;
+			}
+		} else {
+			ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you're not registered. Try again.");
+		}
+	}
+
+	private static void AddCommand(CommandContext ctx) {
+		String id = ctx.getAuthor().getStringID();
+		PlayerObject player = playerDAO.getPlayer(id);
+
+		if(player != null && (player.getPrimaryRole() != null && player.getSecondaryRole() != null)) {
+			if (QueueHelper.isQueued(player, queueHelper)) {
+				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already added!");
+			} else if (queueHelper.getPlayers().size() < 12){
+				QueueHelper.addPrimaryRole(player, queueHelper);
+				ctx.getMessage().addReaction(":white_check_mark:");
+				if (QueueHelper.checkRolesAvailable(queueHelper) && queueHelper.getPlayers().size() > 12) {
+					MatchObject match = QueueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper);
+					MatchDAO matchDAO = new MatchDAOImp();
+					matchDAO.insertMatch(match);
+					match.setId(matchDAO.getLastMatchID());
+
+					EmbedBuilder builder = new EmbedBuilder();
+
+					builder.appendField("RED TEAM MMR: " + match.getTeam_red().getAvgRating(), "Captain: " +
+							ctx.getGuild().getUserByID(
+									Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
+
+					builder.appendField("BLUE TEAM MMR: " + match.getTeam_blue().getAvgRating(), "Captain: " +
+							ctx.getGuild().getUserByID(
+									Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
+
+					builder.withColor(0, 153, 255);
+					builder.withDescription("MAP - " + match.getMap());
+					builder.withTitle("MATCH ID: " + matchDAO.getLastMatchID());
+
+					builder.withFooterText("EACH CAPTAIN MUST REPORT RESULTS AFTER THE MATCH, \"!Result match_id team_color\"");
+					builder.withThumbnail(PugBot.getMapImg(match.getMap()));
+					RequestBuffer.request(() -> ctx.getGuild().getChannelsByName("pugs").get(0).copy().sendMessage(builder.build()));
+
+					// create new VerificationObject for the match
+					VerificationDAO verificationDAO = new VerificationDAOImp();
+
+					// create verification for team red, false by default
+					verificationDAO.insertVerification(match.getId(), match.getTeam_red().getCaptain().getId(), false);
+
+					// create verification for team blue, false by default
+					verificationDAO.insertVerification(match.getId(), match.getTeam_blue().getCaptain().getId(), false);
+
+					queueHelper = new QueueHelper();
+				}
+			}
+		}
+	}
+
+	private static void ResultCommand(CommandContext ctx) {
+		String[] strArr = new String[3];
+		int i = 0;
+
+		// Store the split strings
+		for(String val : ctx.getMessage().getContent().split(" ", 3)) {
+			strArr[i] = val;
+			i++;
+		}
+
+		// check team color in the command
+		if(strArr[2].toUpperCase().equals("RED") || strArr[2].toUpperCase().equals("BLUE")) {
+			// create a MatchObject and get the match for the match id that's typed in.
+			MatchDAO matchDAO = new MatchDAOImp();
+			MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
+
+			// check if the match exists
+			if (match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
+				VerificationDAO verificationDAO = new VerificationDAOImp();
+
+				// check if there's a verification linked to this user's id
+				if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
+					ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
+
+					// check if both verification requests are already handled
+					if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " match is already verified");
+					} else {
+						// find and verify a match for the captain that sent the message
+						for (VerificationObject vo : vos) {
+							if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
+								// check first if there's a mismatch in verifications or if there's no verification at all
+								if ((match.getWinner() != null && strArr[2].toUpperCase().equals(match.getWinner())) || (match.getWinner() == null)) {
+									vo.setVerified(true);
+									verificationDAO.updateVerification(vo);
+									ctx.getMessage().addReaction(":white_check_mark:");
+								} else {
+									// reply if there's a mismatch in team colors reported by the two captains
+									ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
+								}
+							}
+						}
+						// check if both verifications are valid once again and if so, proceed to update mmr accordingly
+						if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
+							if(QueueHelper.updateMMR(vos.get(1), vos.get(2), match.getWinner())) {
+								ctx.getMessage().getChannel().sendMessage("Updated the match: " + match.getId() + " and each player's MMR");
+							}
+						}
+					}
+					// reply if match is already reported by a captain
+				} else {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not captain for the match id: " + match.getId());
+				}
+				// reply if the match doesn't exist
+			} else {
+				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " this match doesn't exist");
+			}
+			// reply if there's an attempt to report a team color other than red or blue
+		} else {
+			ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " try typing in the winning team color again. Either \"Red\" or \"Blue\"");
+		}
+	}
+
+	private static void HelpCommand(CommandContext ctx) {
+		EmbedBuilder builder = new EmbedBuilder();
+		builder.appendField("!Update role_1 role_2", "Update current primary and secondary role", false);
+		builder.appendField("!Add", "Queue up", true);
+		builder.appendField("!Remove", "Exit queue", true);
+		builder.appendField("!Result match_id winner_color (red or blue)", "Captain command to record result from a match", false);
+		builder.appendField("!Rating", "Your rating", true);
+		builder.appendField("!Status", "Queue status", true);
 
 		builder.withColor(185, 255, 173);
-		builder.withDescription("Roles accepted for role commands: Tank, Dps, Supp, Flex");
-		builder.withTitle("!Help - Explained commands");
-		builder.withTimestamp(100);
-
-		RequestBuffer.request(() -> user.getOrCreatePMChannel().sendMessage(builder.build()));
-
+		builder.withDescription("Register primary and secondary role");
+		builder.withTitle("!Register role_1 role_2");
+		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 
-	private static void replyUpdateRoles(IChannel channel, IUser user, String role_1, String role_2) {
-		EmbedBuilder builder = new EmbedBuilder();
+	private static void RemoveCommand(CommandContext ctx) {
+		PlayerObject player = playerDAO.getPlayer(ctx.getAuthor().getStringID());
+		if(queueHelper.getPlayers().size() == 1){
+			// If the queue becomes empty, the whole queue helper is renewed
+			queueHelper.setPlayers(new ArrayList<>());
+			ctx.getMessage().addReaction(":white_check_mark:");
 
-		builder.appendField("Primary role", role_1, true);
-		builder.appendField("Secondary role", role_2, true);
-
-		builder.withAuthorName(user.getName());
-		builder.withColor(0, 255, 0);
-		builder.withTimestamp(100);
-
-		RequestBuffer.request(() -> channel.sendMessage(builder.build()));
+		} else if (QueueHelper.isQueued(player, queueHelper)){
+			// Removes the player from the queue if it contains at least 1 player
+			queueHelper.getPlayers().remove(player);
+			ctx.getMessage().addReaction(":white_check_mark:");
+			// Checks primary role queue and removes the player from the list they're in
+			if(queueHelper.getTanks().contains(player)){
+				queueHelper.getTanks().remove(player);
+				ctx.getMessage().addReaction(":white_check_mark:");
+			} else if (queueHelper.getDps().contains(player)){
+				queueHelper.getDps().remove(player);
+				ctx.getMessage().addReaction(":white_check_mark:");
+			} else if (queueHelper.getSupps().contains(player)){
+				queueHelper.getSupps().remove(player);
+				ctx.getMessage().addReaction(":white_check_mark:");
+			} else if (queueHelper.getFlexes().contains(player)){
+				queueHelper.getFlexes().remove(player);
+				ctx.getMessage().addReaction(":white_check_mark:");
+			}
+		}
 	}
 
 	private static void registerPlayer(String id, String primaryRole, String secondaryRole) {
@@ -550,30 +436,7 @@ public class PugBot {
 		return null;
 	}
 
-	/**
-	private static void poolBuilder(IChannel channel, MatchObject match) {
-		EmbedBuilder builder = new EmbedBuilder();
-
-		selectedMap = selectMap();
-		builder.appendField("**RED TEAM**", , true);
-		builder.appendField("**BLUE TEAM**", "Captain: " + blue[0], true);
-
-		builder.withColor(0, 153, 255);
-		builder.withDescription("MAP - " + selectedMap);
-		builder.withTitle("PICK PHASE");
-		String playersLeft = "Players left: ";
-
-		for(PlayerObject player : allPlayers) {
-			playersLeft += (channel.getGuild().getUserByID(player.getLong_id()).getName() + ", ");
-		}
-
-		builder.withFooterText(playersLeft);
-		builder.withThumbnail(getMapImg(selectedMap));
-		RequestBuffer.request(() -> channel.sendMessage(builder.build()));
-	}
-	 */
-
-	public static String getMapImg(String map) {
+	private static String getMapImg(String map) {
 
 		switch (map) {
 			case "Dorado":
@@ -624,9 +487,5 @@ public class PugBot {
 			default:
 				return null;
 		}
-	}
-
-	public static void recordResult(String id) {
-
 	}
 }
