@@ -52,7 +52,6 @@ public class TeamDAOImp implements TeamDAO {
 	@Override
 	public void insertTeam(TeamObject team) {
 		Connection con = ConnectionFactory.getConnection();
-
 		try {
 			PreparedStatement pst = con.prepareStatement("INSERT INTO team "
 					+ "(color, "
@@ -64,7 +63,7 @@ public class TeamDAOImp implements TeamDAO {
 					+ "player_5_id)"
 					+ "VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-			pst.setString(1, team.getColor().toUpperCase());
+			pst.setString(1, team.getColor());
 			pst.setString(2, team.getCaptain().getId());
 			pst.setString(3, team.getPlayer_1().getId());
 			pst.setString(4, team.getPlayer_2().getId());
@@ -77,5 +76,23 @@ public class TeamDAOImp implements TeamDAO {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public int getLastTeamID() {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st
+					.executeQuery("");
+
+			if (rs.next()) {
+				con.close();
+				return rs.getInt("match_id");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
 	}
 }

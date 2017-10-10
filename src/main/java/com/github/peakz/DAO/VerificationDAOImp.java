@@ -24,7 +24,7 @@ public class VerificationDAOImp implements VerificationDAO {
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT * FROM match_verification WHERE match_id=" + match_id);
+					.executeQuery("SELECT * FROM match_verification WHERE matchID=" + match_id);
 
 			while (rs.next()) {
 				VerificationObject verification = new VerificationObject();
@@ -63,7 +63,7 @@ public class VerificationDAOImp implements VerificationDAO {
 		try {
 			PreparedStatement pst = con.prepareStatement(
 					"INSERT INTO match_verification "
-							+ "(match_id, "
+							+ "(matchID, "
 							+ "captain_id, "
 							+ "verified)"
 							+ "VALUES (?, ?, ?)");
@@ -93,7 +93,7 @@ public class VerificationDAOImp implements VerificationDAO {
 	public void updateVerification(VerificationObject verification) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
-			PreparedStatement pst = con.prepareStatement("UPDATE match_verification SET verified = ? WHERE match_id =" + verification.getMatch_id() + " AND captain_id=" + verification.getCaptain_id());
+			PreparedStatement pst = con.prepareStatement("UPDATE match_verification SET verified = ? WHERE match_verification.matchID=" + verification.getMatch_id() + " AND captain_id=" + verification.getCaptain_id());
 
 			pst.setBoolean(1, verification.isVerified());
 			pst.executeUpdate();

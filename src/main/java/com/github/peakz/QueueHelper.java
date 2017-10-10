@@ -2,15 +2,13 @@ package com.github.peakz;
 
 import com.github.peakz.DAO.*;
 import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelJoinEvent;
-import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IVoiceChannel;
-import sx.blah.discord.util.EmbedBuilder;
-import sx.blah.discord.util.RequestBuffer;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class QueueHelper {
+
 	private ArrayList<PlayerObject> players = new ArrayList<>();
 	private ArrayList<PlayerObject> tanks = new ArrayList<>();
 	private ArrayList<PlayerObject> dps = new ArrayList<>();
@@ -19,6 +17,10 @@ public class QueueHelper {
 
 	public ArrayList<PlayerObject> getPlayers() {
 		return players;
+	}
+
+	public void setPlayers(ArrayList<PlayerObject> players) {
+		this.players = players;
 	}
 
 	public ArrayList<PlayerObject> getTanks() {
@@ -37,28 +39,28 @@ public class QueueHelper {
 		return flexes;
 	}
 
-	public static boolean checkRolesAvailable(QueueHelper queueHelper, UserVoiceChannelJoinEvent event) {
+	public static boolean checkRolesAvailable(QueueHelper queueHelper) {
 		return checkSecondaryRoleFill(queueHelper);
 	}
 
 	private static boolean checkSecondaryRoleFill(QueueHelper queueHelper) {
-		if(queueHelper.getTanks().size() > 1){
-			if(queueHelper.getSupps().size() > 1){
-				if(queueHelper.getFlexes().size() > 1){
-					if(queueHelper.getDps().size() > 1){
+			if (queueHelper.getTanks().size() > 1) {
+				if (queueHelper.getSupps().size() > 1) {
+					if (queueHelper.getFlexes().size() > 1) {
+						if (queueHelper.getDps().size() > 1) {
+							return true;
+						}
+					} else if (queueHelper.getSupps().size() == 0 && (iterateSecondaryRole(queueHelper, 3) || iterateSecondaryRole(queueHelper, 4))) {
 						return true;
 					}
-				} else if(queueHelper.getSupps().size() == 1 && (iterateSecondaryRole(queueHelper, 3) || iterateSecondaryRole(queueHelper, 4))){
+					return false;
+				} else if (queueHelper.getSupps().size() == 0 && (iterateSecondaryRole(queueHelper, 2) || iterateSecondaryRole(queueHelper, 3))) {
 					return true;
 				}
 				return false;
-			} else if(queueHelper.getSupps().size() == 1 && (iterateSecondaryRole(queueHelper, 2) || iterateSecondaryRole(queueHelper, 3))){
+			} else if (queueHelper.getTanks().size() == 0 && (iterateSecondaryRole(queueHelper, 1) || iterateSecondaryRole(queueHelper, 2))) {
 				return true;
 			}
-			return false;
-		} else if(queueHelper.getTanks().size() == 1 && (iterateSecondaryRole(queueHelper, 1) || iterateSecondaryRole(queueHelper, 2))){
-			return true;
-		}
 		return false;
 	}
 
@@ -234,7 +236,7 @@ public class QueueHelper {
 				/**
 				 * If we cannot find any supp to replace with, the method will return false
 				 */
-				break;
+				return false;
 
 			default:
 				break;
@@ -242,12 +244,11 @@ public class QueueHelper {
 		return false;
 	}
 
-	public static MatchObject makeTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper, UserVoiceChannelJoinEvent event) {
-		MatchObject match = balanceTeams(temp_team_red, temp_team_blue, queueHelper, event);
-		return match;
+	public static MatchObject makeTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
+		return balanceTeams(temp_team_red, temp_team_blue, queueHelper);
 	}
 
-	public static MatchObject balanceTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper, UserVoiceChannelJoinEvent event) {
+	public static MatchObject balanceTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		TeamObject red = new TeamObject();
 		TeamObject blue = new TeamObject();
 
@@ -266,34 +267,34 @@ public class QueueHelper {
 			if(tank < 2) {
 				if(queueHelper.getTanks().equals(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
-					movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					tank++;
 				}
 
 			} else if (supp < 2) {
 				if(queueHelper.getSupps().equals(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
-					movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					supp++;
 				}
 
 			} else if (flex < 2) {
 				if(queueHelper.getFlexes().equals(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
-					movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					flex++;
 				}
 			} else if (dps < 2) {
 				if(dps < 1) {
 					if (queueHelper.getDps().equals(queueHelper.getPlayers().get(i))) {
 						temp_team_red.add(queueHelper.getPlayers().get(i));
-						movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+						//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 						dps++;
 					}
 				} else {
 					if (queueHelper.getDps().equals(queueHelper.getPlayers().get(i))) {
 						temp_team_red.add(queueHelper.getPlayers().get(i));
-						movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+						//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 						dps++;
 					}
 				}
@@ -304,29 +305,31 @@ public class QueueHelper {
 			// add players to temp red arraylist
 			if(i == 1 || i == 3 || i == 5 || i == 7 || i == 9 || i == 11){
 				temp_team_red.add(queueHelper.getPlayers().get(i));
-				movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
+				//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 			} else {
 				// add players to temp blue arraylist
 				temp_team_blue.add(queueHelper.getPlayers().get(i));
-				movePlayersVoice(event, queueHelper.getPlayers().get(i), false);
+				//movePlayersVoice(event, queueHelper.getPlayers().get(i), false);
 			}
 		}
 
-		red.setCaptain(temp_team_red.get(1));
-		red.setPlayer_1(temp_team_red.get(2));
-		red.setPlayer_2(temp_team_red.get(3));
-		red.setPlayer_3(temp_team_red.get(4));
-		red.setPlayer_4(temp_team_red.get(5));
-		red.setPlayer_5(temp_team_red.get(6));
+		red.setCaptain(temp_team_red.get(0));
+		red.setPlayer_1(temp_team_red.get(1));
+		red.setPlayer_2(temp_team_red.get(2));
+		red.setPlayer_3(temp_team_red.get(3));
+		red.setPlayer_4(temp_team_red.get(4));
+		red.setPlayer_5(temp_team_red.get(5));
 
-		blue.setCaptain(temp_team_blue.get(1));
-		blue.setPlayer_1(temp_team_blue.get(2));
-		blue.setPlayer_2(temp_team_blue.get(3));
-		blue.setPlayer_3(temp_team_blue.get(4));
-		blue.setPlayer_4(temp_team_blue.get(5));
-		blue.setPlayer_5(temp_team_blue.get(6));
+		blue.setCaptain(temp_team_blue.get(0));
+		blue.setPlayer_1(temp_team_blue.get(1));
+		blue.setPlayer_2(temp_team_blue.get(2));
+		blue.setPlayer_3(temp_team_blue.get(3));
+		blue.setPlayer_4(temp_team_blue.get(4));
+		blue.setPlayer_5(temp_team_blue.get(5));
 
 		TeamDAO teamDAO = new TeamDAOImp();
+		red.setColor("RED");
+		blue.setColor("BLUE");
 		teamDAO.insertTeam(red);
 		teamDAO.insertTeam(blue);
 		return new MatchObject(red, blue);
@@ -386,28 +389,6 @@ public class QueueHelper {
 		queueHelper.getFlexes().add(player);
 	}
 
-	public static void newMatchMessage(IGuild guild, MatchObject match) {
-		MatchDAO matchDAO = new MatchDAOImp();
-
-		EmbedBuilder builder = new EmbedBuilder();
-
-		builder.appendField("RED TEAM MMR: " + match.getTeam_red().getAvgRating(),"Captain: " +
-				guild.getUserByID(
-						Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
-
-		builder.appendField("BLUE TEAM MMR: " + match.getTeam_blue().getAvgRating(), "Captain: " +
-				guild.getUserByID(
-						Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
-
-		builder.withColor(0, 153, 255);
-		builder.withDescription("MAP - " + match.getMap());
-		builder.withTitle("MATCH ID: " + matchDAO.getLastMatchID());
-
-		builder.withFooterText("EACH CAPTAIN MUST REPORT RESULTS AFTER THE MATCH, \"!Result match_id team_color\"");
-		builder.withThumbnail(PugBot.getMapImg(match.getMap()));
-		RequestBuffer.request(() -> guild.getChannelsByName("propugs").get(0).copy().sendMessage(builder.build()));
-	}
-
 	public static boolean updateMMR(VerificationObject v_red, VerificationObject v_blue, String winner){
 		if(v_red.isVerified() && v_blue.isVerified()) {
 			MatchDAO matchDAOImp = new MatchDAOImp();
@@ -461,6 +442,14 @@ public class QueueHelper {
 				default:
 					return false;
 			}
+		}
+		return false;
+	}
+
+	public static boolean isQueued(PlayerObject player, QueueHelper queueHelper){
+		for(PlayerObject po : queueHelper.getPlayers()){
+			if(po.getId().equals(player.getId()))
+				return true;
 		}
 		return false;
 	}
