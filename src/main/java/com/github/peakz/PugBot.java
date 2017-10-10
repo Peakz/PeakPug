@@ -305,44 +305,47 @@ public class PugBot {
 		if(strArr[2].toUpperCase().equals("RED") || strArr[2].toUpperCase().equals("BLUE")) {
 			// create a MatchObject and get the match for the match id that's typed in.
 			MatchDAO matchDAO = new MatchDAOImp();
-			MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
+			// MatchObject match = matchDAO.getMatch(Integer.parseInt(strArr[1]));
+
+			int match_id = Integer.parseInt(strArr[1]);
+			String user_id = ctx.getAuthor().getStringID();
 
 			// check if the match exists
-			if (match.getId() == Integer.parseInt(strArr[1]) && match.getId() != 0) {
+			if (matchDAO.checkMatchID(match_id)) {
 				VerificationDAO verificationDAO = new VerificationDAOImp();
-
+				// get verification
+				VerificationObject current_vo = verificationDAO.getVerification(match_id, user_id);
 				// check if there's a verification linked to this user's id
-				if (verificationDAO.checkCaptain(ctx.getAuthor().getStringID())) {
-					ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match.getId());
-
+				if (current_vo.getCaptain_id().equals(user_id)) {
 					// check if both verification requests are already handled
-					if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
-						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " match is already verified");
+					if (verificationDAO.checkBothVerifications(Integer.parseInt(strArr[1]))) {
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " match has already been verified by both captains!");
 					} else {
 						// find and verify a match for the captain that sent the message
-						for (VerificationObject vo : vos) {
-							if (vo.getCaptain_id().equals(ctx.getAuthor().getStringID())) {
-								// check first if there's a mismatch in verifications or if there's no verification at all
-								if ((match.getWinner() != null && strArr[2].toUpperCase().equals(match.getWinner())) || (match.getWinner() == null)) {
-									vo.setVerified(true);
-									verificationDAO.updateVerification(vo);
-									ctx.getMessage().addReaction(":white_check_mark:");
-								} else {
-									// reply if there's a mismatch in team colors reported by the two captains
-									ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
+						if (current_vo.getCaptain_id().equals(user_id)) {
+							// check first if there's a mismatch in verifications or if there's no verification at all
+							String winner = verificationDAO.getWinner(match_id);
+							if (winner == strArr[2].toUpperCase()) {
+								current_vo.setVerified(true);
+								verificationDAO.updateVerification(current_vo);
+								ctx.getMessage().addReaction(":white_check_mark:");
+
+								// check if both verifications are valid once again and if so, proceed to update mmr accordingly
+								if (verificationDAO.checkBothVerifications(match_id)) {
+									ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match_id);
+									if(QueueHelper.updateMMR(vos.get(1), vos.get(2), winner)) {
+										ctx.getMessage().getChannel().sendMessage("Updated the match: " + match_id + " and each player's MMR");
+									}
 								}
-							}
-						}
-						// check if both verifications are valid once again and if so, proceed to update mmr accordingly
-						if ((vos.get(1).isVerified() && vos.get(2).isVerified())) {
-							if(QueueHelper.updateMMR(vos.get(1), vos.get(2), match.getWinner())) {
-								ctx.getMessage().getChannel().sendMessage("Updated the match: " + match.getId() + " and each player's MMR");
+							} else {
+								// reply if there's a mismatch in team colors reported by the two captains
+								ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
 							}
 						}
 					}
 					// reply if match is already reported by a captain
 				} else {
-					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not captain for the match id: " + match.getId());
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not captain for the match id: " + match_id);
 				}
 				// reply if the match doesn't exist
 			} else {

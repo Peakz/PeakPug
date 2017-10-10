@@ -9,4 +9,5 @@ public interface MatchDAO {
 	void insertMatch(MatchObject match);
 	void updateMatch(MatchObject match);
 	void deleteMatch(MatchObject match);
+	boolean checkMatchID(int match_id);
 }

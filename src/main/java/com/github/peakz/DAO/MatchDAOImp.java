@@ -47,8 +47,8 @@ public class MatchDAOImp implements MatchDAO{
 				MatchObject match = new MatchObject();
 				match.setId(rs.getInt("match_id"));
 				match.setMap(rs.getString("map"));
-				match.setTeam_blue(teamDAO.getTeam(match_id, "blue"));
-				match.setTeam_blue(teamDAO.getTeam(match_id, "red"));
+				match.setTeam_blue(teamDAO.getTeam(match_id, "BLUE"));
+				match.setTeam_blue(teamDAO.getTeam(match_id, "RED"));
 				match.setWinner(rs.getString("winner"));
 
 				con.close();
@@ -67,12 +67,15 @@ public class MatchDAOImp implements MatchDAO{
 			PreparedStatement pst = con.prepareStatement(
 					"INSERT INTO pug_match "
 							+ "(match_id, "
+							+ "team_id_red,"
+							+ "team_id_blue,"
 							+ "map)"
-							+ "VALUES (?, ?)");
+							+ "VALUES (?, ?, ?, ?)");
 
-			if(match.getId() == 0)
 			pst.setInt(1, match.getId());
-			pst.setString(2, match.getMap());
+			pst.setInt(2, match.getTeam_red().getTeam_id());
+			pst.setInt(3, match.getTeam_blue().getTeam_id());
+			pst.setString(4, match.getMap());
 			pst.executeUpdate();
 
 			con.close();
@@ -109,5 +112,26 @@ public class MatchDAOImp implements MatchDAO{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public boolean checkMatchID(int match_id) {
+		Connection con = ConnectionFactory.getConnection();
+		boolean verified;
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st.executeQuery("SELECT match_id FROM pug_match WHERE match_id = " + match_id);
+
+			if(rs.next()) {
+				con.close();
+				return true;
+			} else {
+				con.close();
+				return false;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 }

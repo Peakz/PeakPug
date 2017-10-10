@@ -21,7 +21,15 @@ public class TeamDAOImp implements TeamDAO {
 		try {
 			Statement st = con.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT * FROM team WHERE pug_match.match_id=" + match_id + " AND team.team_color=" + color);
+					.executeQuery("SELECT " +
+							"team.team_id, " +
+							"team.color, " +
+							"team.captain_id," +
+							"team.player_1_id," +
+							"team.player_2_id," +
+							"team.player_3_id," +
+							"team.player_4_id," +
+							"team.player_5_id FROM team, pug_match WHERE team.team_id = pug_match.team_id_" + color + " AND pug_match.match_id =" + match_id);
 
 			if(rs.next()) {
 				TeamObject team = new TeamObject();
@@ -29,7 +37,7 @@ public class TeamDAOImp implements TeamDAO {
 
 				team.setTeam_id(rs.getInt("team_id"));
 				team.setColor(rs.getString("color"));
-				team.setCaptain(playerDAO.getPlayer(rs.getString("captain")));
+				team.setCaptain(playerDAO.getPlayer(rs.getString("captain_id")));
 				team.setPlayer_1(playerDAO.getPlayer(rs.getString("player_1_id")));
 				team.setPlayer_2(playerDAO.getPlayer(rs.getString("player_2_id")));
 				team.setPlayer_3(playerDAO.getPlayer(rs.getString("player_3_id")));
@@ -43,6 +51,25 @@ public class TeamDAOImp implements TeamDAO {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	@Override
+	public int getLastTeamID() {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			Statement st = con.createStatement();
+			ResultSet rs = st
+					.executeQuery("SELECT team_id FROM team ORDER BY team_id DESC LIMIT 1");
+
+			if (rs.next()) {
+				int teamID = rs.getInt("team_id");
+				con.close();
+				return teamID;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
 	}
 
 	/**
@@ -76,23 +103,5 @@ public class TeamDAOImp implements TeamDAO {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public int getLastTeamID() {
-		Connection con = ConnectionFactory.getConnection();
-		try {
-			Statement st = con.createStatement();
-			ResultSet rs = st
-					.executeQuery("");
-
-			if (rs.next()) {
-				con.close();
-				return rs.getInt("match_id");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return 0;
 	}
 }
