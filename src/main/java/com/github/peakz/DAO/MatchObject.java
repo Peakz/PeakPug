@@ -1,7 +1,5 @@
 package com.github.peakz.DAO;
 
-import com.github.peakz.PugBot;
-
 public class MatchObject {
 
 	private TeamObject team_blue;
@@ -14,10 +12,10 @@ public class MatchObject {
 	public MatchObject() {
 	}
 
-	public MatchObject(TeamObject team_blue, TeamObject team_red) {
+	public MatchObject(TeamObject team_blue, TeamObject team_red, String map) {
 		this.team_blue = team_blue;
 		this.team_red = team_red;
-		this.map = PugBot.selectMap();
+		this.map = map;
 	}
 
 	public TeamObject getTeam_blue() {

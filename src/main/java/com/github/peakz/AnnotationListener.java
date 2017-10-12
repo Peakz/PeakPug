@@ -3,8 +3,10 @@ package com.github.peakz;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
 import com.github.peakz.DAO.PlayerObject;
+import com.github.peakz.queues.QueueManager;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
+import sx.blah.discord.handle.obj.IGuild;
 
 import java.util.ArrayList;
 
@@ -18,6 +20,9 @@ public class AnnotationListener {
 	@EventSubscriber
 	public void onReadyEvent(ReadyEvent event) {
 		event.getClient().changePlayingText("propugs");
+		for(IGuild guild : event.getClient().getGuilds()){
+			PugBot.queueManagers.put(guild, new QueueManager(guild));
+		}
 	}
 
 	/**@EventSubscriber
