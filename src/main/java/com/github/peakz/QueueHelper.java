@@ -6,14 +6,23 @@ import sx.blah.discord.handle.obj.IVoiceChannel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 public class QueueHelper {
+	// String arrays of each game mode and its respective maps.
+	private static String [] ESCORT = {"Dorado", "Route 66", "Watchpoint: Gibraltar"};
+	private static String [] HYBRID = {"Eichenwalde", "Hollywood", "King's Row", "Numbani"};
+	private static String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
+	private static String [] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
+	private static String[][] MODES = {ESCORT, HYBRID, CONTROL, ASSAULT};
 
 	private ArrayList<PlayerObject> players = new ArrayList<>();
 	private ArrayList<PlayerObject> tanks = new ArrayList<>();
 	private ArrayList<PlayerObject> dps = new ArrayList<>();
 	private ArrayList<PlayerObject> supps = new ArrayList<>();
 	private ArrayList<PlayerObject> flexes = new ArrayList<>();
+
+	private int antiRNG = 0;
 
 	public ArrayList<PlayerObject> getPlayers() {
 		return players;
@@ -244,11 +253,11 @@ public class QueueHelper {
 		return false;
 	}
 
-	public static MatchObject makeTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
+	public MatchObject makeTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		return balanceTeams(temp_team_red, temp_team_blue, queueHelper);
 	}
 
-	public static MatchObject balanceTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
+	private MatchObject balanceTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		TeamObject red = new TeamObject();
 		TeamObject blue = new TeamObject();
 
@@ -332,10 +341,10 @@ public class QueueHelper {
 		blue.setColor("BLUE");
 		teamDAO.insertTeam(red);
 		teamDAO.insertTeam(blue);
-		return new MatchObject(red, blue);
+		return new MatchObject(red, blue, selectMap());
 	}
 
-	public static void movePlayersVoice(UserVoiceChannelJoinEvent event, PlayerObject player, boolean redOrBlue){
+	private void movePlayersVoice(UserVoiceChannelJoinEvent event, PlayerObject player, boolean redOrBlue){
 		IVoiceChannel voice_1 = event.getGuild().getVoiceChannelsByName("propugsRed1").get(0).copy();
 		IVoiceChannel voice_2 = event.getGuild().getVoiceChannelsByName("propugsBlue1").get(0).copy();
 
@@ -346,7 +355,7 @@ public class QueueHelper {
 		}
 	}
 
-	public static void addPrimaryRole(PlayerObject player, QueueHelper queueHelper) {
+	public void addPrimaryRole(PlayerObject player, QueueHelper queueHelper) {
 		switch(player.getPrimaryRole().toUpperCase()){
 			case "TANK":
 				addTank(player, queueHelper);
@@ -369,27 +378,27 @@ public class QueueHelper {
 		}
 	}
 
-	public static void addTank(PlayerObject player, QueueHelper queueHelper) {
+	private void addTank(PlayerObject player, QueueHelper queueHelper) {
 		queueHelper.getPlayers().add(player);
 		queueHelper.getTanks().add(player);
 	}
 
-	public static void addDPS(PlayerObject player, QueueHelper queueHelper) {
+	private void addDPS(PlayerObject player, QueueHelper queueHelper) {
 		queueHelper.getPlayers().add(player);
 		queueHelper.getDps().add(player);
 	}
 
-	public static void addFlex(PlayerObject player, QueueHelper queueHelper) {
+	private void addFlex(PlayerObject player, QueueHelper queueHelper) {
 		queueHelper.getPlayers().add(player);
 		queueHelper.getFlexes().add(player);
 	}
 
-	public static void addSupp(PlayerObject player, QueueHelper queueHelper) {
+	private void addSupp(PlayerObject player, QueueHelper queueHelper) {
 		queueHelper.getPlayers().add(player);
 		queueHelper.getFlexes().add(player);
 	}
 
-	public static boolean updateMMR(VerificationObject v_red, VerificationObject v_blue, String winner){
+	public boolean updateMMR(VerificationObject v_red, VerificationObject v_blue, String winner){
 		if(v_red.isVerified() && v_blue.isVerified()) {
 			MatchDAO matchDAOImp = new MatchDAOImp();
 			MatchObject mo = matchDAOImp.getMatch(v_blue.getMatch_id());
@@ -446,7 +455,7 @@ public class QueueHelper {
 		return false;
 	}
 
-	public static boolean isQueued(PlayerObject player, QueueHelper queueHelper){
+	public boolean isQueued(PlayerObject player, QueueHelper queueHelper){
 		for(PlayerObject po : queueHelper.getPlayers()){
 			if(po.getId().equals(player.getId()))
 				return true;
@@ -454,5 +463,84 @@ public class QueueHelper {
 		return false;
 	}
 
+	public String selectMap(){
+		Random random = new Random();
+		int n = random.nextInt(3);
+		int m;
 
+		switch (n) {
+			case 0:
+				m = random.nextInt(2);
+				return MODES[n][m];
+			case 1:
+				m = random.nextInt(3);
+				return MODES[n][m];
+			case 2:
+				m = random.nextInt(3);
+				return MODES[n][m];
+			case 3:
+				if (antiRNG < 2) {
+					m = random.nextInt(3);
+					antiRNG++;
+					return MODES[n][m];
+				} else {
+					antiRNG = 0;
+					return MODES[random.nextInt(2)][1];
+				}
+		}
+		return null;
+	}
+
+	public String getMapImg(String map) {
+
+		switch (map) {
+			case "Dorado":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/5/51/Dorado_screenshot_9.png/revision/latest/scale-to-width-down/165?cb=20160630045807";
+
+			case "Route 66":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/8/87/Route66_screenshot_1.png/revision/latest/scale-to-width-down/165?cb=20160708033615";
+
+			case "Watchpoint: Gibraltar":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/7/73/Gibraltar_screenshot_1.png/revision/latest/scale-to-width-down/165?cb=20160710225230";
+
+			case "Eichenwalde":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/5/5e/Eichenwalde_sreenshot_1.png/revision/latest/scale-to-width-down/165?cb=20160823041053";
+
+			case "Hollywood":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/9/98/Hollywood_screenshot_4.jpg/revision/latest/scale-to-width-down/165?cb=20160605011629";
+
+			case "King's Row":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/2/21/Kingsrow_screenshot_8.png/revision/latest/scale-to-width-down/165?cb=20160711195544";
+
+			case "Numbani":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/e/eb/Numbani_screenshot_5.jpg/revision/latest/scale-to-width-down/165?cb=20160504022045";
+
+			case "Ilios":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/7/7d/Ilios_screenshot_1.png/revision/latest/scale-to-width-down/165?cb=20160712060605";
+
+			case "Lijiang Tower":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/e/ed/Lijiang_screenshot_34.jpg/revision/latest/scale-to-width-down/165?cb=20160711182404";
+
+			case "Nepal":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/7/7a/Nepal_screenshot_1.png/revision/latest/scale-to-width-down/165?cb=20160711235021";
+
+			case "Oasis":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/7/70/Oasis_screenshot_first.png/revision/latest/scale-to-width-down/165?cb=20161203031638";
+
+			case "Hanamura":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/d/dd/Hanamura_screenshot_21.png/revision/latest/scale-to-width-down/165?cb=20160626193608";
+
+			case "Horizon Lunar Colony":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/b/b8/Horizon_screenshot_1.png/revision/latest/scale-to-width-down/165?cb=20170620220601";
+
+			case "Temple of Anubis":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/1/12/Anubis_screenshot_4.png/revision/latest/scale-to-width-down/165?cb=20160628005051";
+
+			case "Volskaya Industries":
+				return "https://vignette.wikia.nocookie.net/overwatch/images/9/93/Volskaya_screenshot_13.png/revision/latest/scale-to-width-down/165?cb=20160704000922";
+
+			default:
+				return null;
+		}
+	}
 }

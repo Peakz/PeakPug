@@ -1,8 +1,10 @@
-package com.github.peakz;
+package com.github.peakz.queues;
 
 public class QueueMode {
 	public enum Mode {
-		SOLOQ, RANKS, DUOQ
+		SOLOQ,
+		RANKS,
+		DUOQ
 	}
 
 	private Mode mode;
