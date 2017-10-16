@@ -68,7 +68,7 @@ public class UpdateCommand {
 					break;
 
 				case "SUPP":
-					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("FLEX")) {
+					if (strArr[2].toUpperCase().equals("TANK") || strArr[2].toUpperCase().equals("FLEX") || strArr[2].toUpperCase().equals("DPS")) {
 						updatePlayer(id, strArr[1], strArr[2]);
 						ctx.getMessage().addReaction(":white_check_mark:");
 					}

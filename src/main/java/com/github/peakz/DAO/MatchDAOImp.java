@@ -66,16 +66,14 @@ public class MatchDAOImp implements MatchDAO{
 		try {
 			PreparedStatement pst = con.prepareStatement(
 					"INSERT INTO pug_match "
-							+ "(match_id, "
-							+ "team_id_red,"
+							+ "(team_id_red,"
 							+ "team_id_blue,"
 							+ "map)"
-							+ "VALUES (?, ?, ?, ?)");
+							+ "VALUES (?, ?, ?)");
 
-			pst.setInt(1, match.getId());
-			pst.setInt(2, match.getTeam_red().getTeam_id());
-			pst.setInt(3, match.getTeam_blue().getTeam_id());
-			pst.setString(4, match.getMap());
+			pst.setInt(1, match.getTeam_red().getTeam_id());
+			pst.setInt(2, match.getTeam_blue().getTeam_id());
+			pst.setString(3, match.getMap());
 			pst.executeUpdate();
 
 			con.close();

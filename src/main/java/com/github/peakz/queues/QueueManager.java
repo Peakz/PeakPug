@@ -1,7 +1,7 @@
 package com.github.peakz.queues;
 
 import com.github.peakz.DAO.PlayerObject;
-import com.github.peakz.QueueHelper;
+import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class QueueManager {
 	private QueueHelper queueHelper = new QueueHelper();
 	private IGuild guild;
-
+	private IChannel channel;
 
 	private ArrayList<PlayerObject> temp_team_red = new ArrayList<>();
 	private ArrayList<PlayerObject> temp_team_blue = new ArrayList<>();
@@ -40,5 +40,13 @@ public class QueueManager {
 
 	public void setQueueHelper(QueueHelper queueHelper) {
 		this.queueHelper = queueHelper;
+	}
+
+	public IChannel getChannel() {
+		return channel;
+	}
+
+	public void setChannel(IChannel channel) {
+		this.channel = channel;
 	}
 }
