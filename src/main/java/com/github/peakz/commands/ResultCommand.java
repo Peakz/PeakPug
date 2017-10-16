@@ -2,7 +2,7 @@ package com.github.peakz.commands;
 
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.*;
-import com.github.peakz.QueueHelper;
+import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
 
 import java.util.ArrayList;
@@ -14,12 +14,11 @@ public class ResultCommand {
 	public ResultCommand(CommandContext ctx, QueueManager queueManager) {
 		this.ctx = ctx;
 		this.queueManager = queueManager;
-		create();
+		queueManager.setQueueHelper(new QueueHelper());
+		create(queueManager.getQueueHelper());
 	}
 
-	private void create() {
-		QueueHelper queueHelper = queueManager.getQueueHelper();
-
+	private void create(QueueHelper queueHelper) {
 		String[] strArr = new String[3];
 		int i = 0;
 

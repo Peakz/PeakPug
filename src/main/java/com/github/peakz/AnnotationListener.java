@@ -1,27 +1,33 @@
 package com.github.peakz;
 
-import com.github.peakz.DAO.PlayerDAO;
-import com.github.peakz.DAO.PlayerDAOImp;
-import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.queues.QueueManager;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
+import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.obj.IGuild;
-
-import java.util.ArrayList;
+import sx.blah.discord.handle.obj.IUser;
 
 public class AnnotationListener {
-	private QueueHelper queueHelper = new QueueHelper();
-	private static PlayerDAO playerDAO = new PlayerDAOImp();
-	private static PlayerObject temp_player = new PlayerObject();
-	private static ArrayList<PlayerObject> temp_team_red = new ArrayList<>();
-	private static ArrayList<PlayerObject> temp_team_blue = new ArrayList<>();
 
 	@EventSubscriber
 	public void onReadyEvent(ReadyEvent event) {
 		event.getClient().changePlayingText("propugs");
 		for(IGuild guild : event.getClient().getGuilds()){
 			PugBot.queueManagers.put(guild, new QueueManager(guild));
+			if(guild.getName().equals("TryhardZone")) {
+				for(IUser user : guild.getUsers()){
+					if(!user.getRolesForGuild(guild).contains("Tester") && (!user.equals(guild.getOwner()))) {
+						user.addRole(guild.getRolesByName("Tester").get(0));
+					}
+				}
+			}
+		}
+	}
+
+	@EventSubscriber
+	public void onUserJoin(UserJoinEvent event) {
+		if(event.getGuild().getName().equals("TryhardZone")) {
+			event.getUser().addRole(event.getGuild().getRolesByName("Tester").get(0));
 		}
 	}
 

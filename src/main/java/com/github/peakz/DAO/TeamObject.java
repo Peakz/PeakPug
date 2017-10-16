@@ -115,4 +115,29 @@ public class TeamObject {
 	public int getAvgRating() {
 		return ((captain.getRating() + player_1.getRating() + player_2.getRating() + player_3.getRating() + player_4.getRating() + player_5.getRating()) / 6);
 	}
+
+	public int checkEmptySlot() {
+		int i = -1;
+
+		if(captain == null) {
+			i = 0;
+			return i;
+		} else if (player_1 == null) {
+			i = 1;
+			return i;
+		} else if (player_2 == null) {
+			i = 2;
+			return i;
+		} else if (player_3 == null) {
+			i = 3;
+			return i;
+		} else if (player_4 == null) {
+			i = 4;
+			return i;
+		} else if (player_5 == null) {
+			i = 5;
+			return i;
+		}
+		return i;
+	}
 }

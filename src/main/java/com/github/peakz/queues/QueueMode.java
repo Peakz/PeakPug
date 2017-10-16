@@ -1,21 +1,30 @@
 package com.github.peakz.queues;
 
+import com.darichey.discord.CommandContext;
+
 public class QueueMode {
+	private CommandContext ctx;
+	private QueueManager queueManager;
+	private Mode mode;
+
 	public enum Mode {
 		SOLOQ,
 		RANKS,
 		DUOQ
 	}
 
-	private Mode mode;
 
-	public QueueMode(Mode mode) {
+
+	public QueueMode(Mode mode, CommandContext ctx, QueueManager queueManager) {
 		this.mode = mode;
+		this.ctx = ctx;
+		this.queueManager = queueManager;
 	}
 
 	public void ChooseMode() {
 		switch(mode) {
 			case SOLOQ:
+
 				break;
 
 			case RANKS:
@@ -29,4 +38,7 @@ public class QueueMode {
 		}
 	}
 
+	private void addToQueue() {
+
+	}
 }

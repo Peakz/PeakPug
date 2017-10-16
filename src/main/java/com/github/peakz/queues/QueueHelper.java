@@ -1,8 +1,10 @@
-package com.github.peakz;
+package com.github.peakz.queues;
 
+import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.*;
 import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelJoinEvent;
 import sx.blah.discord.handle.obj.IVoiceChannel;
+import sx.blah.discord.util.EmbedBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +23,12 @@ public class QueueHelper {
 	private ArrayList<PlayerObject> dps = new ArrayList<>();
 	private ArrayList<PlayerObject> supps = new ArrayList<>();
 	private ArrayList<PlayerObject> flexes = new ArrayList<>();
+
+	private ArrayList<PlayerObject> rankSplayers = new ArrayList<>();
+
+	private MatchObject match;
+
+	public QueueHelper(){}
 
 	private int antiRNG = 0;
 
@@ -46,6 +54,10 @@ public class QueueHelper {
 
 	public ArrayList<PlayerObject> getFlexes() {
 		return flexes;
+	}
+
+	public ArrayList<PlayerObject> getRankSplayers() {
+		return rankSplayers;
 	}
 
 	public static boolean checkRolesAvailable(QueueHelper queueHelper) {
@@ -274,34 +286,34 @@ public class QueueHelper {
 
 			// Sort players based on roles into red and blue team
 			if(tank < 2) {
-				if(queueHelper.getTanks().equals(queueHelper.getPlayers().get(i))) {
+				if(queueHelper.getTanks().contains(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
 					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					tank++;
 				}
 
 			} else if (supp < 2) {
-				if(queueHelper.getSupps().equals(queueHelper.getPlayers().get(i))) {
+				if(queueHelper.getSupps().contains(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
 					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					supp++;
 				}
 
 			} else if (flex < 2) {
-				if(queueHelper.getFlexes().equals(queueHelper.getPlayers().get(i))) {
+				if(queueHelper.getFlexes().contains(queueHelper.getPlayers().get(i))) {
 					temp_team_red.add(queueHelper.getPlayers().get(i));
 					//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 					flex++;
 				}
 			} else if (dps < 2) {
 				if(dps < 1) {
-					if (queueHelper.getDps().equals(queueHelper.getPlayers().get(i))) {
+					if (queueHelper.getDps().contains(queueHelper.getPlayers().get(i))) {
 						temp_team_red.add(queueHelper.getPlayers().get(i));
 						//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 						dps++;
 					}
 				} else {
-					if (queueHelper.getDps().equals(queueHelper.getPlayers().get(i))) {
+					if (queueHelper.getDps().contains(queueHelper.getPlayers().get(i))) {
 						temp_team_red.add(queueHelper.getPlayers().get(i));
 						//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 						dps++;
@@ -310,9 +322,9 @@ public class QueueHelper {
 			}
 		}
 
-		for(int i = 1; i < queueHelper.getPlayers().size(); i++){
+		for(int i = 0; i < queueHelper.getPlayers().size(); i++){
 			// add players to temp red arraylist
-			if(i == 1 || i == 3 || i == 5 || i == 7 || i == 9 || i == 11){
+			if(i == 0 || i == 2 || i == 4 || i == 6 || i == 8 || i == 10){
 				temp_team_red.add(queueHelper.getPlayers().get(i));
 				//movePlayersVoice(event, queueHelper.getPlayers().get(i), true);
 			} else {
@@ -321,6 +333,8 @@ public class QueueHelper {
 				//movePlayersVoice(event, queueHelper.getPlayers().get(i), false);
 			}
 		}
+
+		System.out.println("" + queueHelper.getPlayers().size());
 
 		red.setCaptain(temp_team_red.get(0));
 		red.setPlayer_1(temp_team_red.get(1));
@@ -463,7 +477,7 @@ public class QueueHelper {
 		return false;
 	}
 
-	public String selectMap(){
+	private String selectMap(){
 		Random random = new Random();
 		int n = random.nextInt(3);
 		int m;
@@ -542,5 +556,181 @@ public class QueueHelper {
 			default:
 				return null;
 		}
+	}
+
+	public MatchObject startRankS(ArrayList<PlayerObject> rankSplayers) {
+		TeamObject red = new TeamObject();
+		TeamObject blue = new TeamObject();
+
+		Random rand = new Random();
+
+		red.setCaptain(rankSplayers.get(rand.nextInt(rankSplayers.size() - 1)));
+		rankSplayers.remove(red.getCaptain());
+
+		blue.setCaptain(rankSplayers.get(rand.nextInt(rankSplayers.size() - 1)));
+		rankSplayers.remove(blue.getCaptain());
+
+		return new MatchObject(blue, red, getMapImg(selectMap()));
+	}
+
+	private void rankSMessage(CommandContext ctx, MatchObject match, ArrayList<PlayerObject> rankSplayers) {
+		TeamObject red = match.getTeam_red();
+		TeamObject blue = match.getTeam_blue();
+
+		EmbedBuilder builder = new EmbedBuilder();
+		builder.appendField("Red Captain", "" + red.getCaptain(), true);
+		builder.appendField("Blue Captain", "" + blue.getCaptain(), true);
+		builder.appendField("", "", false);
+		builder.appendField("TURN TO PICK: " + red.getCaptain(), "", false);
+		builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
+
+		builder.withColor(185, 255, 173);
+		builder.withThumbnail(getMapImg(match.getMap()));
+		builder.withTitle("RANK S");
+		ctx.getMessage().getChannel().sendMessage(builder.build());
+	}
+
+	// show rankS players
+	private String showPlayers(CommandContext ctx, ArrayList<PlayerObject> rankSplayers) {
+		StringBuilder str = new StringBuilder();
+
+		for(PlayerObject player : rankSplayers) {
+			if(!rankSplayers.get(rankSplayers.size() - 1).equals(player)) {
+				str.append(ctx.getGuild().getUserByID(Long.valueOf(player.getId()))).append(", \n");
+			} else {
+				str.append(ctx.getGuild().getUserByID(Long.valueOf(player.getId())));
+			}
+		}
+		return str.toString();
+	}
+
+	public MatchObject getMatch() {
+		return match;
+	}
+
+	public void setMatch(MatchObject match) {
+		this.match = match;
+	}
+
+	public boolean pickRankS(CommandContext ctx, PlayerObject player, int turn, MatchObject match) {
+		if(turn == 0) {
+			switch (match.getTeam_red().checkEmptySlot()) {
+				case 1:
+					match.getTeam_red().setPlayer_1(player);
+					pickMessage(1, ctx, match, rankSplayers);
+					break;
+				case 2:
+					match.getTeam_red().setPlayer_2(player);
+					pickMessage(1, ctx, match, rankSplayers);
+					break;
+				case 3:
+					match.getTeam_red().setPlayer_3(player);
+					pickMessage(1, ctx, match, rankSplayers);
+					break;
+				case 4:
+					match.getTeam_red().setPlayer_4(player);
+					pickMessage(1, ctx, match, rankSplayers);
+					break;
+				case 5:
+					match.getTeam_red().setPlayer_5(player);
+					pickMessage(2, ctx, match, rankSplayers);
+					break;
+				default:
+					break;
+			}
+			rankSplayers.remove(player);
+			return true;
+
+		} else if (turn == 1) {
+			switch (match.getTeam_blue().checkEmptySlot()) {
+				case 1:
+					match.getTeam_blue().setPlayer_1(player);
+					pickMessage(0, ctx, match, rankSplayers);
+					break;
+				case 2:
+					match.getTeam_blue().setPlayer_2(player);
+					pickMessage(0, ctx, match, rankSplayers);
+					break;
+				case 3:
+					match.getTeam_blue().setPlayer_3(player);
+					pickMessage(0, ctx, match, rankSplayers);
+					break;
+				case 4:
+					match.getTeam_blue().setPlayer_4(player);
+					pickMessage(0, ctx, match, rankSplayers);
+					break;
+				case 5:
+					match.getTeam_blue().setPlayer_5(player);
+					pickMessage(2, ctx, match, rankSplayers);
+					break;
+				default:
+					break;
+			}
+			rankSplayers.remove(player);
+			return true;
+		}
+		return false;
+	}
+
+	private void pickMessage(int turn, CommandContext ctx, MatchObject match, ArrayList<PlayerObject> rankSplayers) {
+		EmbedBuilder builder = new EmbedBuilder();
+
+		TeamObject red = match.getTeam_red();
+		TeamObject blue = match.getTeam_blue();
+
+		builder.appendField("Red Captain", "" + red.getCaptain(), true);
+		builder.appendField("Blue Captain", "" + blue.getCaptain(), true);
+
+		// red 1
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_1().getId())), "", true);
+		// blue 1
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_1().getId())), "", true);
+
+		// red 2
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_2().getId())), "", true);
+		// blue 2
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_2().getId())), "", true);
+
+		// red 3
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_3().getId())), "", true);
+		// blue 3
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_3().getId())), "", true);
+
+		// red 4
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_4().getId())), "", true);
+		// blue 4
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_4().getId())), "", true);
+
+		// red 5
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_5().getId())), "", true);
+		// blue 5
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_5().getId())), "", true);
+
+		builder.appendField("", "", true);
+
+		if(turn == 0) {
+			builder.appendField("TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(red.getCaptain().getId())), "", false);
+			builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
+		} else if (turn == 1) {
+			builder.appendField("TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(blue.getCaptain().getId())), "", false);
+			builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
+		} else {
+			builder.appendField("PICK PHASE COMPLETE", "", true);
+		}
+
+		builder.withThumbnail(getMapImg(match.getMap()));
+
+		builder.withColor(185, 255, 173);
+
+		builder.withTitle("RANK S");
+		ctx.getMessage().getChannel().sendMessage(builder.build());
+	}
+
+	public void resetPools(){
+		this.players = new ArrayList<>();
+		this.dps = new ArrayList<>();
+		this.supps = new ArrayList<>();
+		this.tanks = new ArrayList<>();
+		this.flexes = new ArrayList<>();
 	}
 }

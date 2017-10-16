@@ -14,11 +14,11 @@ public class HelpCommand {
 	private void create() {
 		EmbedBuilder builder = new EmbedBuilder();
 		builder.appendField("!Update role_1 role_2", "Update current primary and secondary role", false);
-		builder.appendField("!Add", "Queue up", true);
-		builder.appendField("!Remove", "Exit queue", true);
+		builder.appendField("!Add soloq", "Queue up", true);
+		builder.appendField("!Remove soloq", "Exit queue", true);
 		builder.appendField("!Result match_id winner_color (red or blue)", "Captain command to record result from a match", false);
 		builder.appendField("!Rating", "Your rating", true);
-		builder.appendField("!Status", "Queue status", true);
+		builder.appendField("!Status soloq", "Queue status", true);
 
 		builder.withColor(185, 255, 173);
 		builder.withDescription("Register primary and secondary role");

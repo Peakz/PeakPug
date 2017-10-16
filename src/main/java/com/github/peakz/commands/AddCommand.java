@@ -2,17 +2,15 @@ package com.github.peakz.commands;
 
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.*;
-import com.github.peakz.QueueHelper;
+import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
 import sx.blah.discord.util.EmbedBuilder;
-import sx.blah.discord.util.RequestBuffer;
 
 import java.util.ArrayList;
 
 public class AddCommand {
 	private CommandContext ctx;
 	private static PlayerDAO playerDAO = new PlayerDAOImp();
-
 	private QueueManager queueManager;
 
 	public AddCommand(CommandContext ctx, QueueManager queueManager){
@@ -26,6 +24,7 @@ public class AddCommand {
 		ArrayList<PlayerObject> temp_team_blue = queueManager.getTemp_team_blue();
 
 		String id = ctx.getAuthor().getStringID();
+		PlayerDAO playerDAO = new PlayerDAOImp();
 		PlayerObject player = playerDAO.getPlayer(id);
 
 		if(playerDAO.checkId(id) && (player.getPrimaryRole() != null && player.getSecondaryRole() != null)) {
@@ -34,7 +33,7 @@ public class AddCommand {
 			} else if (queueHelper.getPlayers().size() < 12){
 				queueHelper.addPrimaryRole(player, queueHelper);
 				ctx.getMessage().addReaction(":white_check_mark:");
-				if (QueueHelper.checkRolesAvailable(queueHelper) && queueHelper.getPlayers().size() > 12) {
+				if (queueHelper.getPlayers().size() == 12) {
 					MatchObject match = queueHelper.makeTeams(temp_team_red, temp_team_blue, queueHelper);
 					MatchDAO matchDAO = new MatchDAOImp();
 					matchDAO.insertMatch(match);
@@ -56,7 +55,7 @@ public class AddCommand {
 
 					builder.withFooterText("EACH CAPTAIN MUST REPORT RESULTS AFTER THE MATCH, \"!Result match_id team_color\"");
 					builder.withThumbnail(queueHelper.getMapImg(match.getMap()));
-					RequestBuffer.request(() -> ctx.getGuild().getChannelsByName("pugs").get(0).copy().sendMessage(builder.build()));
+					ctx.getChannel().sendMessage(builder.build());
 
 					// create new VerificationObject for the match
 					VerificationDAO verificationDAO = new VerificationDAOImp();
@@ -67,7 +66,7 @@ public class AddCommand {
 					// create verification for team blue, false by default
 					verificationDAO.insertVerification(match.getId(), match.getTeam_blue().getCaptain().getId(), false);
 
-					queueManager.setQueueHelper(new QueueHelper());
+					queueHelper.resetPools();
 				}
 			}
 		}

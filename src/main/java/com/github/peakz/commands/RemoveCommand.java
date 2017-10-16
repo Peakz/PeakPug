@@ -4,7 +4,7 @@ import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
 import com.github.peakz.DAO.PlayerObject;
-import com.github.peakz.QueueHelper;
+import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
 
 import java.util.ArrayList;
@@ -34,16 +34,20 @@ public class RemoveCommand {
 			// Removes the player from the queue if it contains at least 1 player
 			queueHelper.getPlayers().remove(player);
 			ctx.getMessage().addReaction(":white_check_mark:");
+
 			// Checks primary role queue and removes the player from the list they're in
 			if(queueHelper.getTanks().contains(player)){
 				queueHelper.getTanks().remove(player);
 				ctx.getMessage().addReaction(":white_check_mark:");
+
 			} else if (queueHelper.getDps().contains(player)){
 				queueHelper.getDps().remove(player);
 				ctx.getMessage().addReaction(":white_check_mark:");
+
 			} else if (queueHelper.getSupps().contains(player)){
 				queueHelper.getSupps().remove(player);
 				ctx.getMessage().addReaction(":white_check_mark:");
+
 			} else if (queueHelper.getFlexes().contains(player)){
 				queueHelper.getFlexes().remove(player);
 				ctx.getMessage().addReaction(":white_check_mark:");
