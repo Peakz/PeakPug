@@ -10,26 +10,41 @@ import java.util.ArrayList;
 
 public class AddCommand {
 	private CommandContext ctx;
-	private static PlayerDAO playerDAO = new PlayerDAOImp();
 	private QueueManager queueManager;
 
 	public AddCommand(CommandContext ctx, QueueManager queueManager){
 		this.ctx = ctx;
 		this.queueManager = queueManager;
-		create(queueManager.getQueueHelper());
 	}
 
-	private void create(QueueHelper queueHelper){
-		ArrayList<PlayerObject> temp_team_red = queueManager.getTemp_team_red();
-		ArrayList<PlayerObject> temp_team_blue = queueManager.getTemp_team_blue();
+	public void addToMode(String mode) {
+		switch (mode) {
+			case "SOLOQ":
+				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
+				soloQMode(queueHelper.getTemp_team_red(), queueHelper.getTemp_team_blue(), queueHelper);
+				break;
 
+			case "RANKS":
+				queueHelper = queueManager.getQueueHelper("RANKS");
+				rankSMode(queueHelper);
+				break;
+
+			case "DUOQ":
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	private void soloQMode(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		String id = ctx.getAuthor().getStringID();
 		PlayerDAO playerDAO = new PlayerDAOImp();
 		PlayerObject player = playerDAO.getPlayer(id);
 
 		if(playerDAO.checkId(id) && (player.getPrimaryRole() != null && player.getSecondaryRole() != null)) {
-			if (queueHelper.isQueued(player, queueHelper)) {
-				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already added!");
+			if (queueHelper.isQueued(player, "SOLOQ")) {
+				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already queued for SoloQ!");
 			} else if (queueHelper.getPlayers().size() < 12){
 				queueHelper.addPrimaryRole(player, queueHelper);
 				ctx.getMessage().addReaction(":white_check_mark:");
@@ -66,9 +81,32 @@ public class AddCommand {
 					// create verification for team blue, false by default
 					verificationDAO.insertVerification(match.getId(), match.getTeam_blue().getCaptain().getId(), false);
 
-					queueHelper.resetPools();
+					queueHelper.resetPools("SOLOQ");
 				}
 			}
+		}
+	}
+
+	private void rankSMode(QueueHelper queueHelper) {
+		String id = ctx.getAuthor().getStringID();
+		PlayerDAO playerDAO = new PlayerDAOImp();
+		PlayerObject player = playerDAO.getPlayer(id);
+
+		if(queueHelper.getRankSplayers().size() < 14) {
+			if(queueHelper.getRankSplayers().contains(player)) {
+				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already queued for Rank S");
+			} else {
+				if(!queueHelper.restrictQueue) {
+					queueHelper.getRankSplayers().add(player);
+					queueHelper.pickedUsers.add(ctx.getMessage().getGuild().getUserByID(Long.valueOf(player.getId())));
+					ctx.getMessage().addReaction(":white_check_mark:");
+				} else {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " wait until pick phase is over");
+				}
+			}
+		} else {
+			queueHelper.startRankS(ctx);
+			queueHelper.resetPools("RANKS");
 		}
 	}
 }

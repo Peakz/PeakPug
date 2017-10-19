@@ -190,7 +190,7 @@ public class VerificationDAOImp implements VerificationDAO {
 		Connection con = ConnectionFactory.getConnection();
 		try {
 			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery("SELECT winner FROM pug_match WHERE matchID = " + match_id);
+			ResultSet rs = st.executeQuery("SELECT winner FROM pug_match WHERE match_id = " + match_id);
 
 			if(rs.next()){
 				String winner = rs.getString("winner");
