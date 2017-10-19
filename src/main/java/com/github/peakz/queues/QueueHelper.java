@@ -3,6 +3,7 @@ package com.github.peakz.queues;
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.*;
 import sx.blah.discord.handle.impl.events.guild.voice.user.UserVoiceChannelJoinEvent;
+import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.handle.obj.IVoiceChannel;
 import sx.blah.discord.util.EmbedBuilder;
 
@@ -11,12 +12,22 @@ import java.util.Collections;
 import java.util.Random;
 
 public class QueueHelper {
+	private QueueManager queueManager;
+	private String mode;
+
+	private ArrayList<PlayerObject> temp_team_blue = new ArrayList<>();
+	private ArrayList<PlayerObject> temp_team_red = new ArrayList<>();
+
 	// String arrays of each game mode and its respective maps.
 	private static String [] ESCORT = {"Dorado", "Route 66", "Watchpoint: Gibraltar"};
 	private static String [] HYBRID = {"Eichenwalde", "Hollywood", "King's Row", "Numbani"};
 	private static String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
 	private static String [] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
 	private static String[][] MODES = {ESCORT, HYBRID, CONTROL, ASSAULT};
+
+	private int antiRNG = 0;
+	public int turn = 0;
+	public boolean restrictQueue = false;
 
 	private ArrayList<PlayerObject> players = new ArrayList<>();
 	private ArrayList<PlayerObject> tanks = new ArrayList<>();
@@ -25,12 +36,12 @@ public class QueueHelper {
 	private ArrayList<PlayerObject> flexes = new ArrayList<>();
 
 	private ArrayList<PlayerObject> rankSplayers = new ArrayList<>();
+	public ArrayList<IUser> pickedUsers = new ArrayList<>();
 
 	private MatchObject match;
 
-	public QueueHelper(){}
-
-	private int antiRNG = 0;
+	QueueHelper(){
+	}
 
 	public ArrayList<PlayerObject> getPlayers() {
 		return players;
@@ -64,6 +75,7 @@ public class QueueHelper {
 		return checkSecondaryRoleFill(queueHelper);
 	}
 
+	// for soloq
 	private static boolean checkSecondaryRoleFill(QueueHelper queueHelper) {
 			if (queueHelper.getTanks().size() > 1) {
 				if (queueHelper.getSupps().size() > 1) {
@@ -85,6 +97,7 @@ public class QueueHelper {
 		return false;
 	}
 
+	// for soloq
 	private static boolean iterateSecondaryRole(QueueHelper queueHelper, int i) {
 		switch(i){
 			// Search for tanks
@@ -265,10 +278,12 @@ public class QueueHelper {
 		return false;
 	}
 
+	// for soloq
 	public MatchObject makeTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		return balanceTeams(temp_team_red, temp_team_blue, queueHelper);
 	}
 
+	// for soloq
 	private MatchObject balanceTeams(ArrayList<PlayerObject> temp_team_red, ArrayList<PlayerObject> temp_team_blue, QueueHelper queueHelper) {
 		TeamObject red = new TeamObject();
 		TeamObject blue = new TeamObject();
@@ -355,9 +370,12 @@ public class QueueHelper {
 		blue.setColor("BLUE");
 		teamDAO.insertTeam(red);
 		teamDAO.insertTeam(blue);
-		return new MatchObject(red, blue, selectMap());
+
+		match = new MatchObject(red, blue, selectMap());
+		return match;
 	}
 
+	// for voice soloq
 	private void movePlayersVoice(UserVoiceChannelJoinEvent event, PlayerObject player, boolean redOrBlue){
 		IVoiceChannel voice_1 = event.getGuild().getVoiceChannelsByName("propugsRed1").get(0).copy();
 		IVoiceChannel voice_2 = event.getGuild().getVoiceChannelsByName("propugsBlue1").get(0).copy();
@@ -414,14 +432,12 @@ public class QueueHelper {
 
 	public boolean updateMMR(VerificationObject v_red, VerificationObject v_blue, String winner){
 		if(v_red.isVerified() && v_blue.isVerified()) {
-			MatchDAO matchDAOImp = new MatchDAOImp();
-			MatchObject mo = matchDAOImp.getMatch(v_blue.getMatch_id());
-
 			TeamDAO teamDAO = new TeamDAOImp();
 			TeamObject t_red = teamDAO.getTeam(v_red.getMatch_id(), "RED");
 			TeamObject t_blue = teamDAO.getTeam(v_blue.getMatch_id(), "BLUE");
-
 			PlayerDAO playerDAO = new PlayerDAOImp();
+
+			System.out.println(t_red.getCaptain().getId());
 
 			PlayerObject[] players = new PlayerObject[] {
 					t_red.getCaptain(),
@@ -469,10 +485,27 @@ public class QueueHelper {
 		return false;
 	}
 
-	public boolean isQueued(PlayerObject player, QueueHelper queueHelper){
-		for(PlayerObject po : queueHelper.getPlayers()){
-			if(po.getId().equals(player.getId()))
-				return true;
+
+	public boolean isQueued(PlayerObject player, String mode){
+		switch(mode) {
+			case "SOLOQ":
+				for(PlayerObject p : players) {
+					if(player.getId().equals(p.getId())) {
+						return true;
+					}
+				}
+				break;
+
+			case "RANKS":
+				for(PlayerObject p : rankSplayers) {
+					if(player.getId().equals(p.getId())) {
+						return true;
+					}
+				}
+				break;
+
+			default:
+				return false;
 		}
 		return false;
 	}
@@ -558,7 +591,8 @@ public class QueueHelper {
 		}
 	}
 
-	public MatchObject startRankS(ArrayList<PlayerObject> rankSplayers) {
+	public void startRankS(CommandContext ctx) {
+		restrictQueue = true;
 		TeamObject red = new TeamObject();
 		TeamObject blue = new TeamObject();
 
@@ -570,10 +604,11 @@ public class QueueHelper {
 		blue.setCaptain(rankSplayers.get(rand.nextInt(rankSplayers.size() - 1)));
 		rankSplayers.remove(blue.getCaptain());
 
-		return new MatchObject(blue, red, getMapImg(selectMap()));
+		match = new MatchObject(blue, red, getMapImg(selectMap()));
+		rankSMessage(ctx);
 	}
 
-	private void rankSMessage(CommandContext ctx, MatchObject match, ArrayList<PlayerObject> rankSplayers) {
+	private void rankSMessage(CommandContext ctx) {
 		TeamObject red = match.getTeam_red();
 		TeamObject blue = match.getTeam_blue();
 
@@ -604,75 +639,71 @@ public class QueueHelper {
 		return str.toString();
 	}
 
-	public MatchObject getMatch() {
-		return match;
+	public void setQueueManager(QueueManager queueManager) {
+		this.queueManager = queueManager;
 	}
 
-	public void setMatch(MatchObject match) {
-		this.match = match;
-	}
+	public MatchObject getMatch() { return match; }
 
-	public boolean pickRankS(CommandContext ctx, PlayerObject player, int turn, MatchObject match) {
+	 /**
+	 public QueueManager getQueueManager() {
+		return queueManager;
+	} */
+
+	public void pickRankS(CommandContext ctx, PlayerObject player) {
 		if(turn == 0) {
 			switch (match.getTeam_red().checkEmptySlot()) {
 				case 1:
 					match.getTeam_red().setPlayer_1(player);
-					pickMessage(1, ctx, match, rankSplayers);
 					break;
 				case 2:
 					match.getTeam_red().setPlayer_2(player);
-					pickMessage(1, ctx, match, rankSplayers);
 					break;
 				case 3:
 					match.getTeam_red().setPlayer_3(player);
-					pickMessage(1, ctx, match, rankSplayers);
 					break;
 				case 4:
 					match.getTeam_red().setPlayer_4(player);
-					pickMessage(1, ctx, match, rankSplayers);
 					break;
 				case 5:
 					match.getTeam_red().setPlayer_5(player);
-					pickMessage(2, ctx, match, rankSplayers);
 					break;
 				default:
 					break;
 			}
-			rankSplayers.remove(player);
-			return true;
 
 		} else if (turn == 1) {
 			switch (match.getTeam_blue().checkEmptySlot()) {
 				case 1:
 					match.getTeam_blue().setPlayer_1(player);
-					pickMessage(0, ctx, match, rankSplayers);
 					break;
 				case 2:
 					match.getTeam_blue().setPlayer_2(player);
-					pickMessage(0, ctx, match, rankSplayers);
 					break;
 				case 3:
 					match.getTeam_blue().setPlayer_3(player);
-					pickMessage(0, ctx, match, rankSplayers);
 					break;
 				case 4:
 					match.getTeam_blue().setPlayer_4(player);
-					pickMessage(0, ctx, match, rankSplayers);
 					break;
 				case 5:
 					match.getTeam_blue().setPlayer_5(player);
-					pickMessage(2, ctx, match, rankSplayers);
+
+					finalRankSMessage(ctx);
+
+					MatchDAO matchDAO = new MatchDAOImp();
+					matchDAO.insertMatch(match);
+					restrictQueue = false;
+					resetPools("RANKS");
 					break;
 				default:
 					break;
 			}
-			rankSplayers.remove(player);
-			return true;
 		}
-		return false;
 	}
 
-	private void pickMessage(int turn, CommandContext ctx, MatchObject match, ArrayList<PlayerObject> rankSplayers) {
+	private void pickMessage() {
+		/**
 		EmbedBuilder builder = new EmbedBuilder();
 
 		TeamObject red = match.getTeam_red();
@@ -682,29 +713,102 @@ public class QueueHelper {
 		builder.appendField("Blue Captain", "" + blue.getCaptain(), true);
 
 		// red 1
-		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_1().getId())), "", true);
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_1().getId())).getName(), "", true);
 		// blue 1
-		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_1().getId())), "", true);
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_1().getId())).getName(), "", true);
 
 		// red 2
-		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_2().getId())), "", true);
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_2().getId())).getName(), "", true);
 		// blue 2
-		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_2().getId())), "", true);
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_2().getId())).getName(), "", true);
 
 		// red 3
-		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_3().getId())), "", true);
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_3().getId())).getName(), "", true);
 		// blue 3
-		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_3().getId())), "", true);
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_3().getId())).getName(), "", true);
 
 		// red 4
-		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_4().getId())), "", true);
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_4().getId())).getName(), "", true);
 		// blue 4
-		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_4().getId())), "", true);
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_4().getId())).getName(), "", true);
 
 		// red 5
-		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_5().getId())), "", true);
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_5().getId())).getName(), "", true);
 		// blue 5
-		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_5().getId())), "", true);
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_5().getId())).getName(), "", true);
+
+		builder.appendField("", "", true);
+
+		if(turn == 0) {
+			builder.appendField("TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(red.getCaptain().getId())), "", false);
+			builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
+		} else if (turn == 1) {
+			builder.appendField("TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(blue.getCaptain().getId())), "", false);
+			builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
+		} else {
+			builder.appendField("PICK PHASE COMPLETE", "", true);
+		}
+
+		builder.withThumbnail(getMapImg(match.getMap()));
+
+		builder.withColor(185, 255, 173);
+
+		builder.withTitle("RANK S");
+		ctx.getMessage().getChannel().sendMessage(builder.build());*/
+	}
+
+	public void resetPools(String mode){
+		switch (mode) {
+			case "SOLOQ":
+				this.players = new ArrayList<>();
+				this.dps = new ArrayList<>();
+				this.supps = new ArrayList<>();
+				this.tanks = new ArrayList<>();
+				this.flexes = new ArrayList<>();
+				break;
+
+			case "RANKS":
+				this.rankSplayers = new ArrayList<>();
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	public void finalRankSMessage(CommandContext ctx) {
+		EmbedBuilder builder = new EmbedBuilder();
+
+		TeamObject red = match.getTeam_red();
+		TeamObject blue = match.getTeam_blue();
+
+		builder.appendField("Red Captain", "" + red.getCaptain(), true);
+		builder.appendField("Blue Captain", "" + blue.getCaptain(), true);
+
+		// red 1
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_1().getId())).getName(), "", true);
+		// blue 1
+		builder.appendField("1. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_1().getId())).getName(), "", true);
+
+		// red 2
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_2().getId())).getName(), "", true);
+		// blue 2
+		builder.appendField("2. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_2().getId())).getName(), "", true);
+
+		// red 3
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_3().getId())).getName(), "", true);
+		// blue 3
+		builder.appendField("3. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_3().getId())).getName(), "", true);
+
+		// red 4
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_4().getId())).getName(), "", true);
+		// blue 4
+		builder.appendField("4. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_4().getId())).getName(), "", true);
+
+		// red 5
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_5().getId())).getName(), "", true);
+		// blue 5
+		builder.appendField("5. " + ctx.getGuild().getUserByID(Long.valueOf(blue.getPlayer_5().getId())).getName(), "", true);
 
 		builder.appendField("", "", true);
 
@@ -726,11 +830,11 @@ public class QueueHelper {
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 
-	public void resetPools(){
-		this.players = new ArrayList<>();
-		this.dps = new ArrayList<>();
-		this.supps = new ArrayList<>();
-		this.tanks = new ArrayList<>();
-		this.flexes = new ArrayList<>();
+	public ArrayList<PlayerObject> getTemp_team_blue() {
+		return temp_team_blue;
+	}
+
+	public ArrayList<PlayerObject> getTemp_team_red() {
+		return temp_team_red;
 	}
 }

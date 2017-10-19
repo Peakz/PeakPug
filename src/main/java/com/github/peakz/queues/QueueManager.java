@@ -1,52 +1,35 @@
 package com.github.peakz.queues;
 
-import com.github.peakz.DAO.PlayerObject;
-import sx.blah.discord.handle.obj.IChannel;
-import sx.blah.discord.handle.obj.IGuild;
-
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class QueueManager {
-	private QueueHelper queueHelper = new QueueHelper();
-	private IGuild guild;
-	private IChannel channel;
+	public Map<String, QueueHelper> queueInstances;
 
-	private ArrayList<PlayerObject> temp_team_red = new ArrayList<>();
-	private ArrayList<PlayerObject> temp_team_blue = new ArrayList<>();
-
-	public QueueManager(IGuild guild){
-		this.guild = guild;
+	public QueueManager(){
+		this.queueInstances = new HashMap<>();
 	}
 
-	public ArrayList<PlayerObject> getTemp_team_red() {
-		return temp_team_red;
+	public void addQueueHelperInstances() {
+		queueInstances.put("SOLOQ", new QueueHelper());
+		queueInstances.put("RANKS", new QueueHelper());
+		queueInstances.put("DUOQ", new QueueHelper());
+		createQueueHelpers();
 	}
 
-	public void setTemp_team_red(ArrayList<PlayerObject> temp_team_red) {
-		this.temp_team_red = temp_team_red;
+	private void createQueueHelpers() {
+		String[] modes = new String[] {"SOLOQ", "RANKS", "DUOQ"};
+		for(String mode : modes) {
+			getQueueHelper(mode).setQueueManager(this);
+		}
 	}
 
-	public ArrayList<PlayerObject> getTemp_team_blue() {
-		return temp_team_blue;
+	public QueueHelper getQueueHelper(String mode) {
+		return queueInstances.get(mode);
 	}
 
-	public void setTemp_team_blue(ArrayList<PlayerObject> temp_team_blue) {
-		this.temp_team_blue = temp_team_blue;
-	}
-
-	public QueueHelper getQueueHelper() {
-		return queueHelper;
-	}
-
-	public void setQueueHelper(QueueHelper queueHelper) {
-		this.queueHelper = queueHelper;
-	}
-
-	public IChannel getChannel() {
-		return channel;
-	}
-
-	public void setChannel(IChannel channel) {
-		this.channel = channel;
+	public void setQueueHelper(String mode) {
+		queueInstances.remove(mode);
+		queueInstances.put(mode, new QueueHelper());
 	}
 }

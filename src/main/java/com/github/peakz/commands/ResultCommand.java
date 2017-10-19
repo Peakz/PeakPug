@@ -10,15 +10,16 @@ import java.util.ArrayList;
 public class ResultCommand {
 	private CommandContext ctx;
 	private QueueManager queueManager;
+	private QueueHelper queueHelper;
 
 	public ResultCommand(CommandContext ctx, QueueManager queueManager) {
 		this.ctx = ctx;
 		this.queueManager = queueManager;
-		queueManager.setQueueHelper(new QueueHelper());
-		create(queueManager.getQueueHelper());
 	}
 
-	private void create(QueueHelper queueHelper) {
+	public void resultMode() {
+		queueHelper = queueManager.getQueueHelper("SOLOQ");
+
 		String[] strArr = new String[3];
 		int i = 0;
 
@@ -51,8 +52,9 @@ public class ResultCommand {
 						// find and verify a match for the captain that sent the message
 						if (current_vo.getCaptain_id().equals(user_id)) {
 							// check first if there's a mismatch in verifications or if there's no verification at all
-							String winner = verificationDAO.getWinner(match_id);
-							if (winner.equals(strArr[2].toUpperCase())) {
+
+							String winner = "" + verificationDAO.getWinner(match_id);
+						if (winner.equals(strArr[2].toUpperCase()) || winner.equals("NONE")) {
 								current_vo.setVerified(true);
 								verificationDAO.updateVerification(current_vo);
 								ctx.getMessage().addReaction(":white_check_mark:");
@@ -60,13 +62,16 @@ public class ResultCommand {
 								// check if both verifications are valid once again and if so, proceed to update mmr accordingly
 								if (verificationDAO.checkBothVerifications(match_id)) {
 									ArrayList<VerificationObject> vos = verificationDAO.getVerifications(match_id);
-									if(queueHelper.updateMMR(vos.get(1), vos.get(2), winner)) {
+									if(queueHelper.updateMMR(vos.get(0), vos.get(1), strArr[2])) {
 										ctx.getMessage().getChannel().sendMessage("Updated the match: " + match_id + " and each player's MMR");
+										MatchObject match = matchDAO.getMatch(match_id);
+										match.setWinner(strArr[2]);
+										matchDAO.updateMatch(match);
 									}
 								}
 							} else {
 								// reply if there's a mismatch in team colors reported by the two captains
-								ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already. If the winning team color was typed wrong, please contact an admin");
+								ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your opponent has verified a different winner already");
 							}
 						}
 					}

@@ -5,7 +5,6 @@ import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.guild.member.UserJoinEvent;
 import sx.blah.discord.handle.obj.IGuild;
-import sx.blah.discord.handle.obj.IUser;
 
 public class AnnotationListener {
 
@@ -13,22 +12,24 @@ public class AnnotationListener {
 	public void onReadyEvent(ReadyEvent event) {
 		event.getClient().changePlayingText("propugs");
 		for(IGuild guild : event.getClient().getGuilds()){
-			PugBot.queueManagers.put(guild, new QueueManager(guild));
-			if(guild.getName().equals("TryhardZone")) {
+			QueueManager queueManager = new QueueManager();
+			queueManager.addQueueHelperInstances();
+			PugBot.queueInstances.put(guild, queueManager);
+			/** if(guild.getName().equals("TryhardZone")) {
 				for(IUser user : guild.getUsers()){
 					if(!user.getRolesForGuild(guild).contains("Tester") && (!user.equals(guild.getOwner()))) {
 						user.addRole(guild.getRolesByName("Tester").get(0));
 					}
 				}
-			}
+			} */
 		}
 	}
 
 	@EventSubscriber
 	public void onUserJoin(UserJoinEvent event) {
-		if(event.getGuild().getName().equals("TryhardZone")) {
+		/** if(event.getGuild().getName().equals("TryhardZone")) {
 			event.getUser().addRole(event.getGuild().getRolesByName("Tester").get(0));
-		}
+		} */
 	}
 
 	/**@EventSubscriber
