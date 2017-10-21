@@ -10,6 +10,8 @@ import java.util.Iterator;
 public class PickCommand {
 	private CommandContext ctx;
 	private QueueManager queueManager;
+	private int turn = 0;
+	PlayerObject player;
 
 	public PickCommand(CommandContext ctx, QueueManager queueManager) {
 		this.ctx = ctx;
@@ -18,63 +20,30 @@ public class PickCommand {
 
 	public void pickPlayer(String number) {
 		QueueHelper queueHelper = queueManager.getQueueHelper("RANKS");
-
-		switch(number) {
-			case "1":
-			case "2":
-			case "3":
-			case "4":
-			case "5":
-			case "6":
-			case "7":
-			case "8":
-			case "9":
-			case "10":
-			case "11":
-			case "12":
-			case "13":
-				if(queueHelper.turnToPick.equals("red")) {
-					System.out.println("test1");
-					if (pickPlayer(queueHelper, number)) {
-						ctx.getMessage().addReaction(":white_check_mark:");
-						queueHelper.turnToPick = "blue";
-						ctx.getMessage().getChannel().sendMessage(playersLeft(queueHelper) + " Blue's turn to pick");
-					}
-				} else {
-					System.out.println("test2");
-					if (pickPlayer(queueHelper, number)) {
-						ctx.getMessage().addReaction(":white_check_mark:");
-						queueHelper.turnToPick = "red";
-						ctx.getMessage().getChannel().sendMessage(playersLeft(queueHelper) + " Red's turn to pick");
-					}
-				}
-				break;
-
-			default:
-				System.out.println("test3");
-				break;
+		if(pickPlayer(queueHelper, number)) {
+			queueHelper.pickRankS(ctx, player);
 		}
 	}
 
 	private boolean pickPlayer(QueueHelper queueHelper, String number) {
 		Iterator<PlayerObject> iter = queueHelper.getRankSplayers().iterator();
 
-		while(iter.hasNext()) {
+		while (iter.hasNext()) {
 			PlayerObject player = iter.next();
-			if(player.getId().equals(queueHelper.getRankSplayers().get(Integer.parseInt(number) - 1).getId()))
-				queueHelper.pickRankS(ctx, player);
-				iter.remove();
+			if (player.getId().equals(queueHelper.getRankSplayers().get(Integer.parseInt(number) - 1).getId())) {
+				this.player = player;
 				return true;
+			}
 		}
 		/** if(queueHelper.restrictQueue) {
-			for (PlayerObject player : queueHelper.getRankSplayers()) {
-				if (player.getId().equals(id)) {
-					queueHelper.pickRankS(ctx, player);
-					queueHelper.getRankSplayers().remove(player);
-					ctx.getMessage().getChannel().sendMessage(playersLeft(queueHelper));
-				}
-			}
-		}*/
+		 for (PlayerObject player : queueHelper.getRankSplayers()) {
+		 if (player.getId().equals(id)) {
+		 queueHelper.pickRankS(ctx, player);
+		 queueHelper.getRankSplayers().remove(player);
+		 ctx.getMessage().getChannel().sendMessage(playersLeft(queueHelper));
+		 }
+		 }
+		 }*/
 		return false;
 	}
 

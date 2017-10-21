@@ -6,8 +6,6 @@ import ch.qos.logback.core.spi.FilterReply;
 
 public class LowFilterPug extends Filter<ILoggingEvent> {
 
-	private static String propug = "161629176183521280";
-
 	@Override
 	public FilterReply decide(ILoggingEvent event) {
 		if (event.getMessage().contains("changed presence")) {

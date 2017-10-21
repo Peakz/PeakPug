@@ -647,13 +647,14 @@ public class QueueHelper {
 		blue.setCaptain(rankSplayers.get(rand.nextInt(rankSplayers.size() - 1)));
 		rankSplayers.remove(blue.getCaptain());
 
-		match = new MatchObject(blue, red, getMapImg(selectMap()));
-		rankSMessage(ctx);
+		this.match = new MatchObject(blue, red, getMapImg(selectMap()));
+		rankSMessage(ctx, match);
 	}
 
-	private void rankSMessage(CommandContext ctx) {
+	private void rankSMessage(CommandContext ctx, MatchObject match) {
 		TeamObject red = match.getTeam_red();
 		TeamObject blue = match.getTeam_blue();
+		match.setMap(selectMap());
 
 		EmbedBuilder builder = new EmbedBuilder();
 		builder.appendField("Red Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(red.getCaptain().getId())).mention(), true);
@@ -662,9 +663,11 @@ public class QueueHelper {
 		builder.appendField("TURN TO PICK: ", "" + ctx.getGuild().getUserByID(Long.valueOf(red.getCaptain().getId())).getName(), false);
 		builder.appendField("Player Pool: ", "" + showPlayers(ctx, rankSplayers), false);
 
-		builder.withColor(185, 255, 173);
 		builder.withThumbnail(getMapImg(match.getMap()));
-		builder.withTitle("RANK S");
+
+		builder.withColor(185, 255, 173);
+
+		builder.withTitle("RANK S - " + match.getMap());
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 
@@ -725,7 +728,7 @@ public class QueueHelper {
 	} */
 
 	public void pickRankS(CommandContext ctx, PlayerObject player) {
-		if(turn == 0) {
+		if(turn == 0 && ctx.getAuthor().getStringID().equals(match.getTeam_red().getCaptain().getId())) {
 			switch (match.getTeam_red().checkEmptySlot()) {
 				case 1:
 					match.getTeam_red().setPlayer_1(player);
@@ -746,7 +749,12 @@ public class QueueHelper {
 					break;
 			}
 
-		} else if (turn == 1) {
+			turn = 1;
+			turnToPick = "Blue";
+			rankSplayers.remove(player);
+			ctx.getMessage().getChannel().sendMessage("Turn to pick: " + turnToPick + "\n" + showPlayersNoMention(ctx, rankSplayers));
+
+		} else if (turn == 1 && ctx.getAuthor().getStringID().equals(match.getTeam_blue().getCaptain().getId())) {
 			switch (match.getTeam_blue().checkEmptySlot()) {
 				case 1:
 					match.getTeam_blue().setPlayer_1(player);
@@ -762,17 +770,23 @@ public class QueueHelper {
 					break;
 				case 5:
 					match.getTeam_blue().setPlayer_5(player);
-
-					finalRankSMessage(ctx);
-
-					MatchDAO matchDAO = new MatchDAOImp();
-					matchDAO.insertMatch(match);
-					restrictQueue = false;
-					resetPools("RANKS");
+					turn = 2;
 					break;
 				default:
 					break;
 			}
+			if(turn != 2) {
+				turn = 0;
+				turnToPick = "Red";
+				rankSplayers.remove(player);
+				ctx.getMessage().getChannel().sendMessage("Turn to pick: " + turnToPick + "\n" + showPlayersNoMention(ctx, rankSplayers));
+			} else if (turn == 2) {
+				finalRankSMessage(ctx);
+				restrictQueue = false;
+				resetPools("RANKS");
+			}
+		} else {
+			ctx.getMessage().addReaction(":exclamation:");
 		}
 	}
 
@@ -856,8 +870,8 @@ public class QueueHelper {
 		TeamObject red = match.getTeam_red();
 		TeamObject blue = match.getTeam_blue();
 
-		builder.appendField("Red Captain", "" + red.getCaptain(), true);
-		builder.appendField("Blue Captain", "" + blue.getCaptain(), true);
+		builder.appendField("Red Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(red.getCaptain().getId())), true);
+		builder.appendField("Blue Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(blue.getCaptain().getId())), true);
 
 		// red 1
 		builder.appendField("1.", ""  + ctx.getGuild().getUserByID(Long.valueOf(red.getPlayer_1().getId())).mention(), true);
@@ -898,7 +912,7 @@ public class QueueHelper {
 
 		builder.withColor(185, 255, 173);
 
-		builder.withTitle("RANK S");
+		builder.withTitle("RANK S - " + match.getMap());
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 		resetPools("RANKS");
 	}

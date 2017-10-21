@@ -18,7 +18,7 @@ public class AddCommand {
 		this.queueManager = queueManager;
 	}
 
-	public void addToMode(String mode) {
+	public void addToMode(String mode, PlayerObject player) {
 		switch (mode) {
 			case "SOLOQ":
 				queueHelper = queueManager.getQueueHelper("SOLOQ");
@@ -27,7 +27,7 @@ public class AddCommand {
 
 			case "RANKS":
 				queueHelper = queueManager.getQueueHelper("RANKS");
-				rankSMode(queueHelper);
+				rankSMode(queueHelper, player);
 				break;
 
 			case "DUOQ":
@@ -101,10 +101,10 @@ public class AddCommand {
 		return str;
 	}
 
-	private void rankSMode(QueueHelper queueHelper) {
-		String id = ctx.getAuthor().getStringID();
-		PlayerDAO playerDAO = new PlayerDAOImp();
-		PlayerObject player = playerDAO.getPlayer(id);
+	private void rankSMode(QueueHelper queueHelper, PlayerObject player) {
+		//String id = ctx.getAuthor().getStringID();
+		//PlayerDAO playerDAO = new PlayerDAOImp();
+		//PlayerObject player = playerDAO.getPlayer(id);
 
 		if(queueHelper.getRankSplayers().size() < 13) {
 			if(queueHelper.isQueued(player, "RANKS")) {
@@ -121,6 +121,21 @@ public class AddCommand {
 					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " wait until pick phase is over");
 				}
 			}
+		}
+	}
+
+	public static String getRanksRole(String str) {
+		switch(str.toLowerCase()) {
+			case "mtank":
+			case "ftank":
+			case "hitscan":
+			case "projectile":
+			case "fsupp":
+			case "msupp":
+				return str;
+
+			default:
+				return null;
 		}
 	}
 }

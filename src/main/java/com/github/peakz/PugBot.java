@@ -5,6 +5,7 @@ import com.darichey.discord.CommandListener;
 import com.darichey.discord.CommandRegistry;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
+import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.commands.*;
 import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
@@ -41,11 +42,11 @@ public class PugBot extends Main {
 		Command add = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
 				// Get the mode by splitting strings
-				String[] strArr = new String[2];
+				String[] strArr = new String[4];
 				int i = 0;
 
 				// Store the split strings
-				for (String val : ctx.getMessage().getContent().split(" ", 2)) {
+				for (String val : ctx.getMessage().getContent().split(" ", 4)) {
 					strArr[i] = val;
 					i++;
 				}
@@ -55,11 +56,18 @@ public class PugBot extends Main {
 
 				switch (strArr[1].toUpperCase()) {
 					case "SOLOQ":
-						addInstance.addToMode("SOLOQ");
+						addInstance.addToMode("SOLOQ", null);
 						break;
 
 					case "RANKS":
-						addInstance.addToMode("RANKS");
+						if((AddCommand.getRanksRole(strArr[2]) != null) && (AddCommand.getRanksRole(strArr[3]) != null)) {
+							PlayerObject r_player = new PlayerObject();
+							r_player.setId(ctx.getAuthor().getStringID());
+							r_player.setRating(0);
+							r_player.setPrimaryRole(strArr[2]);
+							r_player.setSecondaryRole(strArr[3]);
+							addInstance.addToMode("RANKS", r_player);
+						}
 						break;
 
 					case "DUOQ":
@@ -122,6 +130,13 @@ public class PugBot extends Main {
 		Command rank = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
 				ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you rating is " + playerDAO.getPlayer(ctx.getAuthor().getStringID()).getRating());
+			}
+		}).build();
+
+		Command ranks = Command.builder().onCalled(ctx -> {
+			if(ctx.getChannel().getName().equals("propug")) {
+				System.out.println("test");
+				HelpCommand.rolesRankS(ctx);
 			}
 		}).build();
 
@@ -196,6 +211,9 @@ public class PugBot extends Main {
 
 		registry.register(pick, "Pick");
 		registry.register(pick, "pick");
+
+		registry.register(ranks, "Role");
+		registry.register(ranks, "role");
 		client.getDispatcher().registerListener(new CommandListener(registry));
 	}
 }
