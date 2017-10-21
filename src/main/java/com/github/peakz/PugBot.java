@@ -6,6 +6,7 @@ import com.darichey.discord.CommandRegistry;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
 import com.github.peakz.commands.*;
+import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IGuild;
@@ -139,8 +140,12 @@ public class PugBot extends Main {
 				}
 
 				QueueManager queueManager = queueInstances.get(ctx.getGuild());
-				StatusCommand statusCommand = new StatusCommand(ctx, queueManager);
-				statusCommand.showStatus(strArr[1]);
+				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
+				String str = "";
+				str += "[SoloQ: " + queueHelper.getPlayers().size() + "] ";
+				queueHelper = queueManager.getQueueHelper("RANKS");
+				str += "[RankS: " + queueHelper.getPlayers().size() + "]";
+				ctx.getMessage().getChannel().sendMessage(str);
 			}
 		}).build();
 

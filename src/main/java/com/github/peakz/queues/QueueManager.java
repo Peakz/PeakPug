@@ -4,23 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QueueManager {
-	public Map<String, QueueHelper> queueInstances;
+	public Map<String, QueueHelper> queueInstances = new HashMap<>();
 
 	public QueueManager(){
-		this.queueInstances = new HashMap<>();
 	}
 
 	public void addQueueHelperInstances() {
 		queueInstances.put("SOLOQ", new QueueHelper());
 		queueInstances.put("RANKS", new QueueHelper());
 		queueInstances.put("DUOQ", new QueueHelper());
-		createQueueHelpers();
 	}
 
-	private void createQueueHelpers() {
+	public void createQueueHelpers() {
 		String[] modes = new String[] {"SOLOQ", "RANKS", "DUOQ"};
 		for(String mode : modes) {
-			getQueueHelper(mode).setQueueManager(this);
+			QueueHelper queueHelper = new QueueHelper();
+			queueInstances.put(mode, queueHelper);
+			//getQueueHelper(mode).setQueueManager(this);
 		}
 	}
 

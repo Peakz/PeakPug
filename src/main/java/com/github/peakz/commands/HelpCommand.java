@@ -18,7 +18,7 @@ public class HelpCommand {
 		builder.appendField("!Add SoloQ/RankS", "Queue up for a mode", true);
 		builder.appendField("!Remove SoloQ/RankS", "Exit queue for a mode", true);
 		builder.appendField("!Result match_id winning_color", "Captain command to verify results, only SoloQ atm", true);
-		builder.appendField("!Pick @player", "Pick a player", true);
+		builder.appendField("!Pick #", "Pick a player by their number", true);
 		builder.appendField("!Rating", "Shows your rating, only SoloQ atm", true);
 		builder.appendField("!Status SoloQ/RankS", "Queue status for a mode", true);
 
