@@ -37,7 +37,6 @@ public class Main {
 			IDiscordClient client = clientBuilder.login();
 			main = new PugBot(client);
 		} catch (DiscordException e) { // This is thrown if there was a problem building the client
-			System.err.println("Error occurred while logging in!");
 			e.printStackTrace();
 			return null;
 		}

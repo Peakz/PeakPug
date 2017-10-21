@@ -10,10 +10,9 @@ public class AnnotationListener {
 
 	@EventSubscriber
 	public void onReadyEvent(ReadyEvent event) {
-		event.getClient().changePlayingText("propugs");
 		for(IGuild guild : event.getClient().getGuilds()){
 			QueueManager queueManager = new QueueManager();
-			queueManager.addQueueHelperInstances();
+			queueManager.createQueueHelpers();
 			PugBot.queueInstances.put(guild, queueManager);
 			/** if(guild.getName().equals("TryhardZone")) {
 				for(IUser user : guild.getUsers()){

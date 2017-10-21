@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class AddCommand {
 	private CommandContext ctx;
 	private QueueManager queueManager;
+	private QueueHelper queueHelper = new QueueHelper();
 
 	public AddCommand(CommandContext ctx, QueueManager queueManager){
 		this.ctx = ctx;
@@ -20,7 +21,7 @@ public class AddCommand {
 	public void addToMode(String mode) {
 		switch (mode) {
 			case "SOLOQ":
-				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
+				queueHelper = queueManager.getQueueHelper("SOLOQ");
 				soloQMode(queueHelper.getTemp_team_red(), queueHelper.getTemp_team_blue(), queueHelper);
 				break;
 
@@ -64,6 +65,9 @@ public class AddCommand {
 							ctx.getGuild().getUserByID(
 									Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
 
+					builder.appendField("Red Team", listPlayers(ctx, match.getTeam_red()), false);
+					builder.appendField("Blue Team", listPlayers(ctx, match.getTeam_blue()), false);
+
 					builder.withColor(0, 153, 255);
 					builder.withDescription("MAP - " + match.getMap());
 					builder.withTitle("MATCH ID: " + matchDAO.getLastMatchID());
@@ -87,26 +91,36 @@ public class AddCommand {
 		}
 	}
 
+	public String listPlayers(CommandContext ctx, TeamObject team) {
+		String str = "" + ctx.getGuild().getUserByID(Long.valueOf(team.getCaptain().getId())).getName()
+		+ " " + ctx.getGuild().getUserByID(Long.valueOf(team.getPlayer_1().getId())).getName()
+		+ " " + ctx.getGuild().getUserByID(Long.valueOf(team.getPlayer_2().getId())).getName()
+		+ " " + ctx.getGuild().getUserByID(Long.valueOf(team.getPlayer_3().getId())).getName()
+		+ " " + ctx.getGuild().getUserByID(Long.valueOf(team.getPlayer_4().getId())).getName()
+		+ " " + ctx.getGuild().getUserByID(Long.valueOf(team.getPlayer_5().getId())).getName();
+		return str;
+	}
+
 	private void rankSMode(QueueHelper queueHelper) {
 		String id = ctx.getAuthor().getStringID();
 		PlayerDAO playerDAO = new PlayerDAOImp();
 		PlayerObject player = playerDAO.getPlayer(id);
 
-		if(queueHelper.getRankSplayers().size() < 14) {
-			if(queueHelper.getRankSplayers().contains(player)) {
+		if(queueHelper.getRankSplayers().size() < 13) {
+			if(queueHelper.isQueued(player, "RANKS")) {
 				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're already queued for Rank S");
 			} else {
 				if(!queueHelper.restrictQueue) {
 					queueHelper.getRankSplayers().add(player);
 					queueHelper.pickedUsers.add(ctx.getMessage().getGuild().getUserByID(Long.valueOf(player.getId())));
 					ctx.getMessage().addReaction(":white_check_mark:");
+					if (queueHelper.getRankSplayers().size() == 13){
+						queueHelper.startRankS(ctx);
+					}
 				} else {
 					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " wait until pick phase is over");
 				}
 			}
-		} else {
-			queueHelper.startRankS(ctx);
-			queueHelper.resetPools("RANKS");
 		}
 	}
 }
