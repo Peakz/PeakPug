@@ -14,7 +14,7 @@ public class StatusCommand {
 	}
 
 	public void showStatus(String mode) {
-		switch (mode.toUpperCase()) {
+		switch (mode) {
 			case "SOLOQ":
 				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
 				if (queueHelper.getPlayers().size() == 1) {
@@ -36,8 +36,16 @@ public class StatusCommand {
 				}
 				break;
 
+			case "BOTH":
+				queueHelper = queueManager.getQueueHelper("SOLOQ");
+				String str = "";
+				str += "SoloQ: " + queueHelper.getPlayers().size() + " ";
+				queueHelper = queueManager.getQueueHelper("SOLOQ");
+				str += "RankS: " + queueHelper.getPlayers().size();
+
 			default:
 				ctx.getMessage().getChannel().sendMessage("wrong mode");
+				break;
 		}
 	}
 }
