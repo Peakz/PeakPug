@@ -7,9 +7,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ConnectionFactory {
-	public final static String URL = "jdbc:mysql://45.76.43.30/pug_db?useSSL=false";
-	public final static String USER = "peak";
-	public final static String PASS = "XU84bXwGlc5odiEn";
+	public final static String URL = "";
+	public final static String USER = "";
+	public final static String PASS = "";
 
 	/**
 	 * Get a connection to database
