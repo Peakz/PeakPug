@@ -86,7 +86,7 @@ public class MatchDAOImp implements MatchDAO{
 	public void updateMatch(MatchObject match) {
 		Connection con = ConnectionFactory.getConnection();
 		try {
-			PreparedStatement pst = con.prepareStatement("UPDATE pug_match SET winner = ? WHERE pug_id =" + match.getId() + " AND match_verification.matchID = " + match.getId());
+			PreparedStatement pst = con.prepareStatement("UPDATE pug_match SET winner = ? WHERE match_id=" + match.getId());
 			pst.setString(1, match.getWinner());
 			pst.executeUpdate();
 			con.close();
@@ -105,7 +105,7 @@ public class MatchDAOImp implements MatchDAO{
 		Connection con = ConnectionFactory.getConnection();
 		try {
 			Statement st = con.createStatement();
-			st.executeUpdate("DELETE FROM pug_match WHERE pug_id=" + match.getId());
+			st.executeUpdate("DELETE FROM pug_match WHERE match_id=" + match.getId());
 			con.close();
 		} catch (Exception e) {
 			e.printStackTrace();

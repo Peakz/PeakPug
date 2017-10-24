@@ -1,8 +1,8 @@
 package com.github.peakz.commands;
 
 import com.darichey.discord.CommandContext;
-import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
+import com.github.peakz.queues.QueuePug;
 
 public class StatusCommand {
 	private CommandContext ctx;
@@ -14,37 +14,30 @@ public class StatusCommand {
 	}
 
 	public void showStatus(String mode) {
+		QueuePug qpug = queueManager.getQueuePug(mode);
 		switch (mode) {
 			case "SOLOQ":
-				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
-				if (queueHelper.getPlayers().size() == 1) {
-					ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " player in queue");
-				} else {
-					ctx.getMessage().getChannel().sendMessage("" + queueHelper.getPlayers().size() + " players in queue");
-				}
+				ctx.getMessage().getChannel().sendMessage("[SoloQ: " + qpug.getPlayersQueued() + "]");
 				break;
 
 			case "RANKS":
-				queueHelper = queueManager.getQueueHelper("RANKS");
-				if (queueHelper.pickedUsers.size() > 1) {
-
-				}
-				if (queueHelper.getPlayers().size() == 1) {
-					ctx.getMessage().getChannel().sendMessage("" + queueHelper.getRankSplayers().size() + " player in queue");
-				} else {
-					ctx.getMessage().getChannel().sendMessage("" + queueHelper.getRankSplayers().size() + " players in queue");
-				}
+				ctx.getMessage().getChannel().sendMessage("[RankS -" +
+						" main tanks: " + qpug.getMTQueud() + "/2+" +
+						" flex tanks: " + qpug.getFTQueued() + "/2+" +
+						" hitscans: " + qpug.getHSQueued() + "/2+" +
+						" projectile: " + qpug.getPJQueued() + "/2+" +
+						" flex supports: " + qpug.getFSQueued() + "/2+" +
+						" main supports: " + qpug.getMSQueued() + "/2+" + " ]");
 				break;
 
 			case "BOTH":
-				queueHelper = queueManager.getQueueHelper("SOLOQ");
-				String str = "";
-				str += "SoloQ: " + queueHelper.getPlayers().size() + " ";
-				queueHelper = queueManager.getQueueHelper("SOLOQ");
-				str += "RankS: " + queueHelper.getPlayers().size();
+				QueuePug qpug1 = queueManager.getQueuePug("SOLOQ");
+				QueuePug qpug2 = queueManager.getQueuePug("RANKS");
+				ctx.getMessage().getChannel().sendMessage("`[SoloQ: " + qpug1.getPlayersQueued() + "]`" + " `[Rank S: " + qpug2.getPlayersQueued() + "]`");
+				break;
 
 			default:
-				ctx.getMessage().getChannel().sendMessage("wrong mode");
+				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " wrong mode!");
 				break;
 		}
 	}

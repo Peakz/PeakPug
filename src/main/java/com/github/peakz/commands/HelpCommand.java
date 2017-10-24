@@ -15,17 +15,17 @@ public class HelpCommand {
 		EmbedBuilder builder = new EmbedBuilder();
 		builder.appendField("!Register role_1 role_2", "Register a primary and secondary role", true);
 		builder.appendField("!Update role_1 role_2", "Update current primary and secondary role", true);
-		builder.appendField("!Add SoloQ/RankS", "Queue up for a mode", true);
-		builder.appendField("!Remove SoloQ/RankS", "Exit queue for a mode", true);
+		builder.appendField("!Add SoloQ/RankS", "QueuePug up SoloQ or Rank S", true);
+		builder.appendField("!Remove SoloQ/RankS", "Exit queue for SoloQ or Rank S", true);
 		builder.appendField("!Result match_id winning_color", "Captain command to verify results, only SoloQ atm", true);
 		builder.appendField("!Pick #", "Pick a player by their number", true);
 		builder.appendField("!Rating", "Shows your rating, only SoloQ atm", true);
-		builder.appendField("!Status", "Queue status for a mode", true);
-		builder.appendField("!Role", "Shows the roles you have to sign up with for Rank S", true);
+		builder.appendField("!Status", "QueuePug status for a mode", true);
+		builder.appendField("!Role", "Shows the roles you register and update profile with", true);
 
 		builder.withColor(185, 255, 173);
-		builder.withDescription("Tank, DPS, Flex and Supp");
-		builder.withTitle("Accepted roles");
+		builder.withDescription("Main Tank = `mtank`, Flex Tank = `ftank`, Hitscan = `hitscan`, Projectile = `projectile`, Flex Support = `fsupp`, Main Support = `msupp`");
+		builder.withTitle("Roles");
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 
@@ -39,7 +39,7 @@ public class HelpCommand {
 		builder.appendField("Main Support", "msupp", true);
 
 		builder.withColor(185, 255, 173);
-		builder.withTitle("Accepted roles when using !Add RankS role_1 role_2");
+		builder.withTitle("Roles");
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 }

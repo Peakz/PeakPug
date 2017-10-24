@@ -1,35 +1,21 @@
 package com.github.peakz.queues;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class QueueManager {
-	public Map<String, QueueHelper> queueInstances = new HashMap<>();
+	public HashMap<String, QueuePug> queueInstances;
 
-	public QueueManager(){
+	public QueueManager() {
+		this.queueInstances = new HashMap<>();
 	}
 
 	public void addQueueHelperInstances() {
-		queueInstances.put("SOLOQ", new QueueHelper());
-		queueInstances.put("RANKS", new QueueHelper());
-		queueInstances.put("DUOQ", new QueueHelper());
+		queueInstances.put("SOLOQ", new QueuePug());
+		queueInstances.put("RANKS", new QueuePug());
+		//queueInstances.put("DUOQ", new QueuePug());
 	}
 
-	public void createQueueHelpers() {
-		String[] modes = new String[] {"SOLOQ", "RANKS", "DUOQ"};
-		for(String mode : modes) {
-			QueueHelper queueHelper = new QueueHelper();
-			queueInstances.put(mode, queueHelper);
-			//getQueueHelper(mode).setQueueManager(this);
-		}
-	}
-
-	public QueueHelper getQueueHelper(String mode) {
+	public QueuePug getQueuePug(String mode) {
 		return queueInstances.get(mode);
-	}
-
-	public void setQueueHelper(String mode) {
-		queueInstances.remove(mode);
-		queueInstances.put(mode, new QueueHelper());
 	}
 }

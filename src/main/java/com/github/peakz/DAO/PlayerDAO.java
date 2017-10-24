@@ -7,6 +7,7 @@ public interface PlayerDAO {
 	ArrayList<PlayerObject> getPlayersTeam(int team_id);
 	void insertPlayer(PlayerObject player);
 	void updatePlayer(PlayerObject player);
+	void updatePlayerRoles(String id, String role1, String role2);
 	void deletePlayer(PlayerObject player);
 	boolean checkId(String player_id);
 	boolean checkRoles(String player_id, String primaryRole, String secondaryRole);

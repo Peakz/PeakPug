@@ -26,8 +26,8 @@ public class PlayerDAOImp implements PlayerDAO {
 				PlayerObject player = new PlayerObject();
 
 				player.setId(rs.getString("id"));
-				player.setPrimaryRole(rs.getString("primary_role"));
-				player.setSecondaryRole(rs.getString("secondary_role"));
+				player.setPrimaryRole(rs.getString("primary_role").toLowerCase());
+				player.setSecondaryRole(rs.getString("secondary_role").toLowerCase());
 				player.setRating(rs.getInt("rating"));
 
 				con.close();
@@ -127,6 +127,21 @@ public class PlayerDAOImp implements PlayerDAO {
 			pst.setInt(3, player.getRating());
 			pst.executeUpdate();
 
+			con.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void updatePlayerRoles(String id, String role1, String role2) {
+		Connection con = ConnectionFactory.getConnection();
+		try {
+			PreparedStatement pst = con.prepareStatement("UPDATE player SET primary_role = ?, secondary_role = ? WHERE id =" + id);
+
+			pst.setString(1, role1);
+			pst.setString(2, role2);
+			pst.executeUpdate();
 			con.close();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -1,13 +1,12 @@
 package com.github.peakz;
 
 import com.darichey.discord.Command;
+import com.darichey.discord.CommandContext;
 import com.darichey.discord.CommandListener;
 import com.darichey.discord.CommandRegistry;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
-import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.commands.*;
-import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IGuild;
@@ -20,110 +19,66 @@ public class PugBot extends Main {
 	// public static Map<IChannel, QueueManager> channelInstances = new HashMap<>();
 
 	private static PlayerDAO playerDAO = new PlayerDAOImp();
+	private static int k = 1;
 
 	PugBot(IDiscordClient client) {
 		super(client);
 	}
 
 	static void createCommands(IDiscordClient client) {
-		Command register = Command.builder().onCalled(RegisterCommand::new).build();
+		Command register = Command.builder().onCalled(ctx -> {
+			RegisterCommand registerCommand = new RegisterCommand(ctx);
+			/*
+			for(int i = 0; i < 12; i++) {
+				PlayerObject player = playerDAO.getPlayer("" + (k));
+				k++;
+				System.out.println("id :" + player.getId() + "\nPrimary Role: " + player.getPrimaryRole().toLowerCase() + "\nSecondary Role: " + player.getSecondaryRole().toLowerCase());
+				AddCommand add = new AddCommand(ctx, queueInstances.get(ctx.getGuild()));
+				add.addToMode("RANKS", player);
+			}
+			*/
+		}).build();
 
 		// Create command for updating roles in a player profile
 		Command update = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
-				for (Map.Entry<IGuild, QueueManager> entry : queueInstances.entrySet()) {
-					if (entry.getKey().equals(ctx.getGuild())) {
-						new UpdateCommand(ctx);
-					}
-				}
+				String strArr[] = getParts(ctx, 3);
+				UpdateCommand updateCommand = new UpdateCommand(ctx);
+				updateCommand.updatePlayer(strArr[1], strArr[2]);
 			}
 		}).build();
 
 		Command add = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
-				// Get the mode by splitting strings
-				String[] strArr = new String[4];
-				int i = 0;
+				String[] strArr = getParts(ctx, 2);
+				String id = ctx.getAuthor().getStringID();
 
-				// Store the split strings
-				for (String val : ctx.getMessage().getContent().split(" ", 4)) {
-					strArr[i] = val;
-					i++;
-				}
-
-				QueueManager queueManager = queueInstances.get(ctx.getGuild());
-				AddCommand addInstance = new AddCommand(ctx, queueManager);
-
-				switch (strArr[1].toUpperCase()) {
-					case "SOLOQ":
-						addInstance.addToMode("SOLOQ", null);
-						break;
-
-					case "RANKS":
-						if((AddCommand.getRanksRole(strArr[2]) != null) && (AddCommand.getRanksRole(strArr[3]) != null)) {
-							PlayerObject r_player = new PlayerObject();
-							r_player.setId(ctx.getAuthor().getStringID());
-							r_player.setRating(0);
-							r_player.setPrimaryRole(strArr[2]);
-							r_player.setSecondaryRole(strArr[3]);
-							addInstance.addToMode("RANKS", r_player);
-						}
-						break;
-
-					case "DUOQ":
-						ctx.getChannel().sendMessage("DuoQ is not yet implemented. Check back later!");
-						break;
-
-					default:
-						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " wrong mode");
-						break;
+				if(playerDAO.checkId(id)) {
+					QueueManager queueManager = queueInstances.get(ctx.getGuild());
+					AddCommand addInstance = new AddCommand(ctx, queueManager);
+					addInstance.addToMode(strArr[1].toUpperCase(), playerDAO.getPlayer(id));
+				} else {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not registered. Type !help");
 				}
 			}
 		}).build();
 
 		Command remove = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
-				// Get the mode by splitting strings
-				String[] strArr = new String[2];
-				int i = 0;
-
-				// Store the split strings
-				for (String val : ctx.getMessage().getContent().split(" ", 2)) {
-					strArr[i] = val;
-					i++;
-				}
+				String[] strArr = getParts(ctx, 2);
 
 				QueueManager queueManager = queueInstances.get(ctx.getGuild());
 				RemoveCommand removeCommand = new RemoveCommand(ctx, queueManager);
-
-				switch (strArr[1].toUpperCase()) {
-					case "SOLOQ":
-						if(removeCommand.removeFromMode("SOLOQ")) {
-							ctx.getMessage().addReaction(":white_check_mark:");
-						}
-						break;
-
-					case "RANKS":
-						if(removeCommand.removeFromMode("RANKS")) {
-							ctx.getMessage().addReaction(":white_check_mark:");
-						}
-						break;
-
-					case "DUOQ":
-						ctx.getChannel().sendMessage("DuoQ is not yet implemented. Check back later!");
-						break;
-
-					default:
-						ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " wrong mode");
-						break;
-				}
+				removeCommand.removeFromMode(strArr[1].toUpperCase());
 			}
 		}).build();
 
 		Command result = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
+				String[] strArr = getParts(ctx, 3);
 				QueueManager queueManager = queueInstances.get(ctx.getGuild());
-				new ResultCommand(ctx, queueManager);
+				ResultCommand resultCommand = new ResultCommand(ctx, queueManager);
+				resultCommand.checkWinner(Integer.parseInt(strArr[1]), strArr[2]);
 			}
 		}).build();
 
@@ -135,7 +90,6 @@ public class PugBot extends Main {
 
 		Command ranks = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
-				System.out.println("test");
 				HelpCommand.rolesRankS(ctx);
 			}
 		}).build();
@@ -144,39 +98,16 @@ public class PugBot extends Main {
 
 		Command status = Command.builder().onCalled(ctx -> {
 			if(ctx.getChannel().getName().equals("propug")) {
-				// Get the mode by splitting strings
-				String[] strArr = new String[2];
-				int i = 0;
-
-				// Store the split strings
-				for (String val : ctx.getMessage().getContent().split(" ", 2)) {
-					strArr[i] = val;
-					i++;
-				}
-
-				QueueManager queueManager = queueInstances.get(ctx.getGuild());
-				QueueHelper queueHelper = queueManager.getQueueHelper("SOLOQ");
-				String str = "";
-				str += "[SoloQ: " + queueHelper.getPlayers().size() + "] ";
-				queueHelper = queueManager.getQueueHelper("RANKS");
-				str += "[RankS: " + queueHelper.getPlayers().size() + "]";
-				ctx.getMessage().getChannel().sendMessage(str);
+				String[] strArr = getParts(ctx, 2);
+				StatusCommand statusCommand = new StatusCommand(ctx, queueInstances.get(ctx.getGuild()));
+				statusCommand.showStatus("BOTH");
 			}
 		}).build();
 
 		Command pick = Command.builder()
 				.onCalled(ctx -> {
 					if(ctx.getChannel().getName().equals("propug")) {
-						// Get the mode by splitting strings
-						String[] strArr = new String[2];
-						int i = 0;
-
-						// Store the split strings
-						for (String val : ctx.getMessage().getContent().split(" ", 2)) {
-							strArr[i] = val;
-							i++;
-						}
-
+						String[] strArr = getParts(ctx, 2);
 						QueueManager queueManager = queueInstances.get(ctx.getGuild());
 						PickCommand pickInstance = new PickCommand(ctx, queueManager);
 						pickInstance.pickPlayer(strArr[1]);
@@ -215,5 +146,18 @@ public class PugBot extends Main {
 		registry.register(ranks, "Role");
 		registry.register(ranks, "role");
 		client.getDispatcher().registerListener(new CommandListener(registry));
+	}
+
+	private static String[] getParts(CommandContext ctx, int parts) {
+		// Get the mode by splitting strings
+		String[] strArr = new String[parts];
+		int i = 0;
+
+		// Store the split strings
+		for (String val : ctx.getMessage().getContent().split(" ", parts)) {
+			strArr[i] = val;
+			i++;
+		}
+		return strArr;
 	}
 }

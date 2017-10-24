@@ -4,6 +4,7 @@ public class TeamObject {
 
 	private int team_id;
 	private String color;
+	private PlayerObject[] players;
 	private PlayerObject captain;
 	private PlayerObject player_1;
 	private PlayerObject player_2;
@@ -11,10 +12,27 @@ public class TeamObject {
 	private PlayerObject player_4;
 	private PlayerObject player_5;
 
+	private boolean gotMT = false;
+	private boolean gotFT = false;
+	private boolean gotHS = false;
+	private boolean gotPJ = false;
+	private boolean gotFS = false;
+	private boolean gotMS = false;
+
 	/**
 	 * Empty constructor
 	 */
 	public TeamObject() {
+	}
+
+	public TeamObject(PlayerObject[] players) {
+		this.players = players;
+		this.captain = players[0];
+		this.player_1 = players[1];
+		this.player_2 = players[2];
+		this.player_3 = players[3];
+		this.player_4 = players[4];
+		this.player_5 = players[5];
 	}
 
 	/**
@@ -112,6 +130,24 @@ public class TeamObject {
 		this.player_5 = player_5;
 	}
 
+	public PlayerObject[] getPlayers() {
+		return players;
+	}
+
+	public void setPlayersNumber(PlayerObject player) {
+		if(player_1 == null) {
+			player_1 = player;
+		} else if (player_2 == null) {
+			player_2 = player;
+		} else if (player_3 == null) {
+			player_3 = player;
+		} else if (player_4 == null) {
+			player_4 = player;
+		} else if (player_5 == null) {
+			player_5 = player;
+		}
+	}
+
 	public int getAvgRating() {
 		return ((captain.getRating() + player_1.getRating() + player_2.getRating() + player_3.getRating() + player_4.getRating() + player_5.getRating()) / 6);
 	}
@@ -139,5 +175,37 @@ public class TeamObject {
 			return i;
 		}
 		return i;
+	}
+
+	public String checkEmptyRole(PlayerObject p) {
+			if(!gotMT && p.getRoleFlag().equals("mtank")) {
+				gotMT = true;
+				return "mtank";
+			} else if (!gotFT && p.getRoleFlag().equals("ftank")) {
+				gotFT = true;
+				return "ftank";
+			} else if (!gotHS && p.getRoleFlag().equals("hitscan")) {
+				gotHS = true;
+				return "hitscan";
+			} else if (!gotPJ && p.getRoleFlag().equals("projectile")) {
+				gotPJ = true;
+				return "projectile";
+			} else if (!gotFS && p.getRoleFlag().equals("fsupp")) {
+				gotFS = true;
+				return "fsupp";
+			} else if (!gotMS && p.getRoleFlag().equals("msupp")) {
+				gotMS = true;
+				return "msupp";
+			}
+		return null;
+	}
+
+	public PlayerObject withRole(String role) {
+		for(PlayerObject p : players) {
+			if(p.getRoleFlag().equals(role)) {
+				return p;
+			}
+		}
+		return null;
 	}
 }

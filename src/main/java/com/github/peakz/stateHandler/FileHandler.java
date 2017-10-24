@@ -1,5 +1,6 @@
 package com.github.peakz.stateHandler;
 
+import com.github.peakz.queues.QueuePug;
 import com.google.gson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,5 +172,37 @@ public class FileHandler {
 			e.printStackTrace();
 		}
 		return jsonObject;
+	}
+
+	/**
+	 * Write a queue object to a file
+	 * @param qp
+	 */
+	public static void writeQueueSerialized(QueuePug qp) {
+		try {
+			FileOutputStream fos = new FileOutputStream("tempQueue.ser");
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(qp);
+			oos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Read a stored queue object from a file
+	 * @return qp
+	 */
+	public static QueuePug readQueueSerialized() {
+		try {
+			FileInputStream fis = new FileInputStream("tempQueue.ser");
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			QueuePug qp = (QueuePug) ois.readObject();
+			ois.close();
+			return qp;
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

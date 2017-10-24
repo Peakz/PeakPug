@@ -2,10 +2,8 @@ package com.github.peakz.commands;
 
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.PlayerObject;
-import com.github.peakz.queues.QueueHelper;
 import com.github.peakz.queues.QueueManager;
-
-import java.util.Iterator;
+import com.github.peakz.queues.QueuePug;
 
 public class RemoveCommand {
 	private CommandContext ctx;
@@ -16,28 +14,31 @@ public class RemoveCommand {
 		this.queueManager = queueManager;
 	}
 
-	public boolean removeFromMode(String mode) {
-		String id = ctx.getAuthor().getStringID();
-		Iterator<PlayerObject> iter;
+	public void removeFromMode(String mode) {
+		PlayerObject player = new PlayerObject();
 		switch (mode) {
 			case "SOLOQ":
-				iter = queueManager.getQueueHelper(mode).getPlayers().iterator();
-				while(iter.hasNext()) {
-					PlayerObject player = iter.next();
+				QueuePug qpug = queueManager.getQueuePug(mode);
+				player = qpug.getPlayer(ctx.getAuthor().getStringID());
 
-					if(player.getId().equals(id))
-						queueManager.getQueueHelper(mode).removePrimaryRole(player, queueManager.getQueueHelper(mode));
-						return true;
+				if(qpug.queuedPlayers.contains(player)) {
+					player = qpug.getPlayer(ctx.getAuthor().getStringID());
+					qpug.removePlayer(mode, player);
+					ctx.getMessage().addReaction(":white_check_mark:");
+				} else {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're not queued!");
 				}
 				break;
 
 			case "RANKS":
-				iter = queueManager.getQueueHelper(mode).getRankSplayers().iterator();
-				while(iter.hasNext()) {
-					PlayerObject player = iter.next();
-					if(player.getId().equals(id))
-						iter.remove();
-						return true;
+				qpug = queueManager.getQueuePug(mode);
+				player = qpug.getPlayer(ctx.getAuthor().getStringID());
+
+				if(qpug.queuedPlayers.contains(player)) {
+					qpug.removePlayer(mode, player);
+					ctx.getMessage().addReaction(":white_check_mark:");
+				} else {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're not queued!");
 				}
 				break;
 
@@ -45,28 +46,8 @@ public class RemoveCommand {
 				break;
 
 			default:
-				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " wrong mode!");
+				ctx.getMessage().addReaction(":exclamation:");
 				break;
 		}
-		ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " you're not queued!");
-		return false;
-	}
-
-	private boolean removeFromRoleLists(QueueHelper queueHelper, PlayerObject player, Iterator<PlayerObject> iter) {
-		// Checks primary role queue and removes the player from the list they're in
-		if(queueHelper.getTanks().contains(player)){
-			queueHelper.getTanks().remove(player);
-			return true;
-		} else if (queueHelper.getDps().contains(player)){
-			queueHelper.getDps().remove(player);
-			return true;
-		} else if (queueHelper.getSupps().contains(player)){
-			queueHelper.getSupps().remove(player);
-			return true;
-		} else if (queueHelper.getFlexes().contains(player)){
-			queueHelper.getFlexes().remove(player);
-			return true;
-		}
-		return false;
 	}
 }
