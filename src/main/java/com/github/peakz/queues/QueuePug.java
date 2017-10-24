@@ -262,7 +262,6 @@ public class QueuePug implements Serializable{
 			player.setRoleFlag("fsupp");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
-			System.out.println("hey");
 			fsupp++;
 			return true;
 		} else if (secondaryRole.equals("fsupp") && whichRole.equals("second")) {
