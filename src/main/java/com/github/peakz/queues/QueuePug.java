@@ -143,9 +143,6 @@ public class QueuePug implements Serializable{
 	private boolean minusPlayer(PlayerObject player) {
 		queuedPlayers.remove(player);
 		player.scheduleNotification(ctx, "", 1);
-		if(ranks.contains(player)) {
-			ranks.remove(player);
-		}
 		if(roleCount1.containsKey(player)) {
 			roleCount1.remove(player, player.getRoleFlag());
 		} else if (roleCount2.containsKey(player)){
@@ -473,6 +470,10 @@ public class QueuePug implements Serializable{
 	public int getFSQueued() {return fsupp;}
 	public int getMSQueued() {return msupp;}
 
+	public boolean containsInstance(PlayerObject c) {
+		return queuedPlayers.stream().anyMatch(e -> e.getId().equals(c.getId()));
+	}
+
 	public PlayerObject getPlayer(String id) {
 		for(PlayerObject p : queuedPlayers) {
 			if(p.getId().equals(id)) {
@@ -501,29 +502,29 @@ public class QueuePug implements Serializable{
 			builder.appendField("RED TEAM MMR", "" + match.getTeam_red().getAvgRating(), true);
 			builder.appendField("BLUE TEAM MMR", "" + match.getTeam_blue().getAvgRating(), true);
 
-			builder.appendField("Captain", "" + match.getTeam_red().getCaptain(), true);
-			builder.appendField("Captain", "" + match.getTeam_blue().getCaptain(), true);
+			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention(), true);
+			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention(), true);
 
-			builder.appendField("Main Tank", "" + match.getTeam_red().withRole("mtank").getId(), true);
-			builder.appendField("Main Tank", "" + match.getTeam_blue().withRole("mtank").getId(), true);
+			builder.appendField("Main Tank", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("mtank").getId())).mention(), true);
+			builder.appendField("Main Tank", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("mtank").getId())).mention(), true);
 
-			builder.appendField("Flex Tank", "" + match.getTeam_red().withRole("ftank").getId(), true);
-			builder.appendField("Flex Tank", "" + match.getTeam_blue().withRole("ftank").getId(), true);
+			builder.appendField("Flex Tank", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("ftank").getId())).mention(), true);
+			builder.appendField("Flex Tank", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("ftank").getId())).mention(), true);
 
-			builder.appendField("Hitscan", "" + match.getTeam_red().withRole("hitscan").getId(), true);
-			builder.appendField("Hitscan", "" + match.getTeam_blue().withRole("hitscan").getId(), true);
+			builder.appendField("Hitscan", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("hitscan").getId())).mention(), true);
+			builder.appendField("Hitscan", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("hitscan").getId())).mention(), true);
 
-			builder.appendField("Projectile", "" + match.getTeam_red().withRole("projectile").getId(), true);
-			builder.appendField("Projectile", "" + match.getTeam_blue().withRole("projectile").getId(), true);
+			builder.appendField("Projectile", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("projectile").getId())).mention(), true);
+			builder.appendField("Projectile", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("projectile").getId())).mention(), true);
 
-			builder.appendField("Flex Support", "" + match.getTeam_red().withRole("fsupp").getId(), true);
-			builder.appendField("Flex Support", "" + match.getTeam_blue().withRole("fsupp").getId(), true);
+			builder.appendField("Flex Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("fsupp").getId())).mention(), true);
+			builder.appendField("Flex Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("fsupp").getId())).mention(), true);
 
-			builder.appendField("Main Support", "" + match.getTeam_red().withRole("msupp").getId(), true);
-			builder.appendField("Main Support", "" + match.getTeam_blue().withRole("msupp").getId(), true);
+			builder.appendField("Main Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("msupp").getId())).mention(), true);
+			builder.appendField("Main Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("msupp").getId())).mention(), true);
 		} else {
-			builder.appendField("Captain", "" + match.getTeam_red().getCaptain().getId(), true);
-			builder.appendField("Captain", "" + match.getTeam_blue().getCaptain().getId(), true);
+			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention(), true);
+			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention(), true);
 
 			builder.appendField("Available Main Tanks", "" + rolePoolMsg("mtank"), true);
 			builder.appendField("Available Flex Tanks", "" + rolePoolMsg("ftank"), true);
@@ -542,7 +543,7 @@ public class QueuePug implements Serializable{
 			builder.withTitle("MATCH ID: " + match.getId());
 		} else {
 			builder.withColor(228, 38, 38);
-			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + match.getTeam_red().getCaptain().getId() + " - MATCH ID: " + matchDAO.getLastMatchID());
+			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).getName() + " - MATCH ID: " + matchDAO.getLastMatchID());
 		}
 
 
@@ -563,7 +564,7 @@ public class QueuePug implements Serializable{
 			case "msupp":
 				for(int i = 0; i < ranks.size(); i++) {
 					if(ranks.get(i).getRoleFlag().equals(role)) {
-						str += (i + 1) + ". " + ctx.getGuild().getUserByID(Long.valueOf(ranks.get(i).getId())) + "\n";
+						str += (i + 1) + ". " + ctx.getGuild().getUserByID(Long.valueOf(ranks.get(i).getId())).getName() + "\n";
 						//str += (i + 1) + ". " + ctx.getAuthor().getName() + " " + role + "\n";
 					}
 				}
@@ -578,8 +579,8 @@ public class QueuePug implements Serializable{
 	private void makePickPhaseMessage(String color) {
 		EmbedBuilder builder = new EmbedBuilder();
 
-		builder.appendField("Captain", "" + match.getTeam_red().getCaptain(), true);
-		builder.appendField("Captain", "" + match.getTeam_blue().getCaptain(), true);
+		builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
+		builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
 
 		builder.appendField("Available Main Tanks", "" + rolePoolMsg("mtank"), true);
 		builder.appendField("Available Flex Tanks", "" + rolePoolMsg("ftank"), true);
@@ -590,14 +591,17 @@ public class QueuePug implements Serializable{
 
 		if(color.equals("RED")) {
 			builder.withColor(228, 38, 38);
+			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
 		} else if (color.equals("BLUE")) {
 			builder.withColor(24, 109, 238);
+			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
 		} else {
 			builder.withColor(55, 240, 27);
+			builder.withTitle("RANK S - PICK PHASE - FINISHED - MATCH ID: " + match.getId());
 		}
 		builder.withDescription("MAP - " + match.getMap());
 
-		builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + match.getTeam_red().getCaptain().getId() + " - MATCH ID: " + match.getId());
+
 
 		builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
 		GameMaps gameMaps = new GameMaps();

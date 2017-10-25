@@ -3,6 +3,7 @@ package com.github.peakz.commands;
 import com.darichey.discord.CommandContext;
 import com.github.peakz.queues.QueueManager;
 import com.github.peakz.queues.QueuePug;
+import sx.blah.discord.util.EmbedBuilder;
 
 public class StatusCommand {
 	private CommandContext ctx;
@@ -16,24 +17,35 @@ public class StatusCommand {
 	public void showStatus(String mode) {
 		QueuePug qpug = queueManager.getQueuePug(mode);
 		switch (mode) {
-			case "SOLOQ":
-				ctx.getMessage().getChannel().sendMessage("[SoloQ: " + qpug.getPlayersQueued() + "]");
-				break;
-
-			case "RANKS":
-				ctx.getMessage().getChannel().sendMessage("[RankS -" +
-						" main tanks: " + qpug.getMTQueud() + "/2+" +
-						" flex tanks: " + qpug.getFTQueued() + "/2+" +
-						" hitscans: " + qpug.getHSQueued() + "/2+" +
-						" projectile: " + qpug.getPJQueued() + "/2+" +
-						" flex supports: " + qpug.getFSQueued() + "/2+" +
-						" main supports: " + qpug.getMSQueued() + "/2+" + " ]");
-				break;
 
 			case "BOTH":
 				QueuePug qpug1 = queueManager.getQueuePug("SOLOQ");
 				QueuePug qpug2 = queueManager.getQueuePug("RANKS");
-				ctx.getMessage().getChannel().sendMessage("`[SoloQ: " + qpug1.getPlayersQueued() + "]`" + " `[Rank S: " + qpug2.getPlayersQueued() + "]`");
+
+				EmbedBuilder builder = new EmbedBuilder();
+
+				builder.appendField("SoloQ", "Total Players: `" + qpug1.getPlayersQueued() + "`"
+						+ "\nMain Tanks - `" + qpug1.getMTQueud() + "/2`"
+						+ "\nFlex Tanks - `" + qpug1.getFTQueued() + "/2`"
+						+ "\nHitscans - `" + qpug1.getHSQueued() + "/2`"
+						+ "\nProjectiles - `" + qpug1.getPJQueued() + "/2`"
+						+ "\nFlex Supports - `" + qpug1.getFSQueued() + "/2`"
+						+ "\nMain Supports - `" + qpug1.getMSQueued() + "/2`", true);
+
+
+				builder.appendField("Rank S", "Total Players: `" + qpug2.getPlayersQueued() + "`"
+						+ "\nMain Tanks - `" + qpug2.getMTQueud() + "/2`"
+						+ "\nFlex Tanks - `" + qpug2.getFTQueued() + "/2`"
+						+ "\nHitscans - `" + qpug2.getHSQueued() + "/2`"
+						+ "\nProjectiles - `" + qpug2.getPJQueued() + "/2`"
+						+ "\nFlex Supports - `" + qpug2.getFSQueued() + "/2`"
+						+ "\nMain Supports - `" + qpug2.getMSQueued() + "/2`", true);
+
+				builder.withColor(239, 225, 28);
+				builder.withTitle("Queue Status");
+
+				builder.withFooterText("A game will be made after I can make 2/2/2 for both teams");
+				ctx.getMessage().getChannel().sendMessage(builder.build());
 				break;
 
 			default:

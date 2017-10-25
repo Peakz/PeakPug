@@ -21,7 +21,7 @@ public class AddCommand {
 			switch (mode) {
 				case "SOLOQ":
 					QueuePug qpug = queueManager.getQueuePug(mode);
-					if (!qpug.queuedPlayers.contains(player)) {
+					if (!qpug.containsInstance(player)) {
 						qpug.addPlayer("SOLOQ", player, ctx);
 						ctx.getMessage().addReaction(":white_check_mark:");
 						break;
@@ -32,7 +32,7 @@ public class AddCommand {
 
 				case "RANKS":
 					qpug = queueManager.getQueuePug(mode);
-					if (!qpug.queuedPlayers.contains(player)) {
+					if (!qpug.containsInstance(player)) {
 						qpug.addPlayer(mode, player, ctx);
 						ctx.getMessage().addReaction(":white_check_mark:");
 						break;

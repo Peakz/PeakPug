@@ -20,7 +20,7 @@ public class HelpCommand {
 		builder.appendField("!Result match_id winning_color", "Captain command to verify results, only SoloQ atm", true);
 		builder.appendField("!Pick #", "Pick a player by their number", true);
 		builder.appendField("!Rating", "Shows your rating, only SoloQ atm", true);
-		builder.appendField("!Status", "QueuePug status for a mode", true);
+		builder.appendField("!Status", "Queue status for SoloQ and Rank S", true);
 		builder.appendField("!Role", "Shows the roles you register and update profile with", true);
 
 		builder.withColor(185, 255, 173);

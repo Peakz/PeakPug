@@ -49,7 +49,7 @@ public class PugBot extends Main {
 		}).build();
 
 		Command add = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				String[] strArr = getParts(ctx, 2);
 				String id = ctx.getAuthor().getStringID();
 
@@ -64,7 +64,7 @@ public class PugBot extends Main {
 		}).build();
 
 		Command remove = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				String[] strArr = getParts(ctx, 2);
 
 				QueueManager queueManager = queueInstances.get(ctx.getGuild());
@@ -74,7 +74,7 @@ public class PugBot extends Main {
 		}).build();
 
 		Command result = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				String[] strArr = getParts(ctx, 3);
 				QueueManager queueManager = queueInstances.get(ctx.getGuild());
 				ResultCommand resultCommand = new ResultCommand(ctx, queueManager);
@@ -83,13 +83,13 @@ public class PugBot extends Main {
 		}).build();
 
 		Command rank = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				ctx.getChannel().sendMessage(ctx.getAuthor().mention() + " you rating is " + playerDAO.getPlayer(ctx.getAuthor().getStringID()).getRating());
 			}
 		}).build();
 
 		Command ranks = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				HelpCommand.rolesRankS(ctx);
 			}
 		}).build();
@@ -97,7 +97,7 @@ public class PugBot extends Main {
 		Command help = Command.builder().onCalled(HelpCommand::new).build();
 
 		Command status = Command.builder().onCalled(ctx -> {
-			if(ctx.getChannel().getName().equals("propug")) {
+			if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 				String[] strArr = getParts(ctx, 2);
 				StatusCommand statusCommand = new StatusCommand(ctx, queueInstances.get(ctx.getGuild()));
 				statusCommand.showStatus("BOTH");
@@ -106,7 +106,7 @@ public class PugBot extends Main {
 
 		Command pick = Command.builder()
 				.onCalled(ctx -> {
-					if(ctx.getChannel().getName().equals("propug")) {
+					if(ctx.getChannel().getName().equals("propug") || ctx.getChannel().getName().equals("testing")) {
 						String[] strArr = getParts(ctx, 2);
 						QueueManager queueManager = queueInstances.get(ctx.getGuild());
 						PickCommand pickInstance = new PickCommand(ctx, queueManager);
