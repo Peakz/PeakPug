@@ -14,8 +14,6 @@ public class PlayerObject {
 	private int rating;
 	private String roleFlag;
 	private Timer timer;
-	private boolean soloq;
-	private boolean ranks;
 
 	public PlayerObject() {
 	}
@@ -34,10 +32,9 @@ public class PlayerObject {
 		this.id = id;
 		this.primaryRole = primaryRole;
 		this.secondaryRole = secondaryRole;
+		this.roleFlag = "";
 		this.rating = rating;
 		this.timer = new Timer();
-		this.soloq = false;
-		this.ranks = false;
 	}
 
 	public String getId() {
@@ -78,22 +75,6 @@ public class PlayerObject {
 
 	public void setRoleFlag(String roleFlag) {
 		this.roleFlag = roleFlag;
-	}
-
-	public boolean isSoloq() {
-		return soloq;
-	}
-
-	public void setSoloq(boolean soloq) {
-		this.soloq = soloq;
-	}
-
-	public boolean isRanks() {
-		return ranks;
-	}
-
-	public void setRanks(boolean ranks) {
-		this.ranks = ranks;
 	}
 
 	public void scheduleNotification(CommandContext ctx, String mode, int status, QueuePug qpug) {

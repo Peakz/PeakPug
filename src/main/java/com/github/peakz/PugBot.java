@@ -46,6 +46,7 @@ public class PugBot extends Main {
 				String strArr[] = getParts(ctx, 3);
 				UpdateCommand updateCommand = new UpdateCommand(ctx);
 				updateCommand.updatePlayer(strArr[1], strArr[2]);
+
 			} else {
 				ctx.getMessage().getChannel().sendMessage("There's no channel name that contains \"pug \"");
 			}
@@ -58,7 +59,6 @@ public class PugBot extends Main {
 				if (playerDAO.checkId(id)) {
 					QueueManager queueManager = queueInstances.get(ctx.getChannel());
 					PlayerObject player = playerDAO.getPlayer(id);
-
 					AddCommand addInstance = new AddCommand(ctx, queueManager);
 					addInstance.addToMode(strArr[1].toUpperCase(), player);
 				} else {

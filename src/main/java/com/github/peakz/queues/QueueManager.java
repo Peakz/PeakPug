@@ -7,7 +7,6 @@ import sx.blah.discord.handle.obj.IChannel;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class QueueManager {
 	private IChannel channel;
@@ -20,7 +19,7 @@ public class QueueManager {
 	public QueueManager(IChannel channel) {
 		this.channel = channel;
 		this.queueInstances = new HashMap<>();
-		channelInstances = new ConcurrentHashMap<>();
+		channelInstances = new HashMap<>();
 	}
 
 	public void addQueueHelperInstances() {

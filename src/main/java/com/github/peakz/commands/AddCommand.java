@@ -21,7 +21,6 @@ public class AddCommand {
 			switch (mode) {
 				case "SOLOQ":
 					QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
-
 					if (!qpug.containsInstance(player)) {
 						if (!queueManager.getQueuePug(ctx.getChannel(), "RANKS").containsInstance(player)) {
 							qpug.addPlayer("SOLOQ", player, ctx);
@@ -36,7 +35,6 @@ public class AddCommand {
 
 				case "RANKS":
 					qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
-
 					if (!qpug.containsInstance(player)) {
 						if (!queueManager.getQueuePug(ctx.getChannel(), "SOLOQ").containsInstance(player)) {
 							qpug.addPlayer(mode, player, ctx);
@@ -45,7 +43,7 @@ public class AddCommand {
 							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You cannot queue for multiple modes at once!");
 						}
 					} else {
-						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're already queued for SoloQ!");
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're already queued for Rank S!");
 					}
 					break;
 

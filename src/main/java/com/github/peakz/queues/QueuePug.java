@@ -57,6 +57,8 @@ public class QueuePug implements Serializable {
 					 */
 					if (aboutToPop) {
 						aboutToPop = !balanceComps(mode);
+					} else {
+						aboutToPop = false;
 					}
 					break;
 				} else {
@@ -74,6 +76,8 @@ public class QueuePug implements Serializable {
 				 */
 					if (aboutToPop) {
 						aboutToPop = !balanceComps(mode);
+					} else {
+						aboutToPop = false;
 					}
 					break;
 				} else {
@@ -142,11 +146,6 @@ public class QueuePug implements Serializable {
 	}
 
 	private boolean minusPlayer(PlayerObject player) {
-		if (player.isSoloq()) {
-			player.setSoloq(false);
-		} else if (player.isRanks()) {
-			player.setRanks(false);
-		}
 		queuedPlayers.remove(player);
 		if (roleCount1.containsKey(player)) {
 			roleCount1.remove(player, player.getRoleFlag());
@@ -195,13 +194,11 @@ public class QueuePug implements Serializable {
 		}
 
 		if (mode.equals("SOLOQ")) {
-			player.setSoloq(true);
 			// lock queue
 			if (queuedPlayers.size() == 12 || queuedPlayers.size() > 12) {
 				aboutToPop = true;
 			}
 		} else if (mode.equals("RANKS")) {
-			player.setRanks(true);
 			// lock queue
 			if (queuedPlayers.size() == 13 || queuedPlayers.size() > 13) {
 				aboutToPop = true;
@@ -214,6 +211,7 @@ public class QueuePug implements Serializable {
 		String primaryRole = player.getPrimaryRole();
 		String secondaryRole = player.getSecondaryRole();
 		String roleFlag;
+
 		if (primaryRole.equals("mtank") && whichRole.equals("first") && mtank < 2) {
 			player.setRoleFlag("mtank");
 			roleFlag = player.getRoleFlag();
@@ -281,6 +279,7 @@ public class QueuePug implements Serializable {
 			msupp++;
 			return true;
 		} else if (secondaryRole.equals("msupp") && whichRole.equals("second")) {
+			System.out.println("test");
 			player.setRoleFlag("msupp");
 			roleFlag = player.getRoleFlag();
 			roleCount2.put(player, roleFlag);
