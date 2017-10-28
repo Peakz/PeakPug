@@ -18,8 +18,9 @@ public class RegisterCommand {
 		role1 = role1.toLowerCase();
 		role2 = role2.toLowerCase();
 
-		if(roleSwitch(role1) && roleSwitch(role2)) {
+		if (roleSwitch(role1) && roleSwitch(role2)) {
 			PlayerObject player = new PlayerObject();
+			player.setId(ctx.getAuthor().getStringID());
 			player.setPrimaryRole(role1);
 			player.setSecondaryRole(role2);
 			player.setRating(1000);
@@ -34,7 +35,7 @@ public class RegisterCommand {
 
 	@SuppressWarnings("Duplicates")
 	public boolean roleSwitch(String role) {
-		switch(role) {
+		switch (role) {
 			case "mtank":
 			case "ftank":
 			case "hitscan":

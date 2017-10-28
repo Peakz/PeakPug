@@ -11,11 +11,10 @@ public class VerificationDAOImp implements VerificationDAO {
 	/**
 	 * Get a verification for a specific match_id and captain_id.
 	 *
-	 * @see VerificationObject#getMatch_id()
-	 * @see VerificationObject#getCaptain_id()
-	 *
 	 * @param match_id
 	 * @return
+	 * @see VerificationObject#getMatch_id()
+	 * @see VerificationObject#getCaptain_id()
 	 */
 	@Override
 	public ArrayList<VerificationObject> getVerifications(int match_id) {
@@ -52,7 +51,7 @@ public class VerificationDAOImp implements VerificationDAO {
 			ResultSet rs = st
 					.executeQuery("SELECT * FROM match_verification WHERE matchID=" + match_id + " AND captain_id =" + captain_id);
 
-			if(rs.next()) {
+			if (rs.next()) {
 				VerificationObject verification = new VerificationObject();
 
 				verification.setVerification_id(rs.getInt("verification_id"));
@@ -75,15 +74,14 @@ public class VerificationDAOImp implements VerificationDAO {
 	/**
 	 * Creates a new verification that belongs to a specific match_id
 	 * but is bound to the captains for each team in a match.
-	 *
+	 * <p>
 	 * Each verification has a unique id and only one captain belonging to it.
-	 *
-	 * @see VerificationObject#getMatch_id()
-	 * @see VerificationObject#getCaptain_id()
 	 *
 	 * @param match_id
 	 * @param captain_id
 	 * @param verified
+	 * @see VerificationObject#getMatch_id()
+	 * @see VerificationObject#getCaptain_id()
 	 */
 	@Override
 	public void insertVerification(int match_id, String captain_id, boolean verified) {
@@ -111,11 +109,10 @@ public class VerificationDAOImp implements VerificationDAO {
 	 * Update a verification from a match through a captain from one of the teams in that match.
 	 * The method updates the verification since a new verification is created one a match has started.
 	 *
+	 * @param verification
 	 * @see VerificationObject#getMatch_id()
 	 * @see VerificationObject#getCaptain_id()
 	 * @see VerificationObject#isVerified()
-	 *
-	 * @param verification
 	 */
 	@Override
 	public void updateVerification(VerificationObject verification) {
@@ -146,8 +143,8 @@ public class VerificationDAOImp implements VerificationDAO {
 			Statement st = con.createStatement();
 			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE captain_id = " + captain_id + " AND matchID =" + match_id);
 
-			if(rs.next()) {
-				if(rs.getBoolean("verified") == false) {
+			if (rs.next()) {
+				if (rs.getBoolean("verified") == false) {
 					con.close();
 					return true;
 				}
@@ -172,7 +169,7 @@ public class VerificationDAOImp implements VerificationDAO {
 			Statement st = con.createStatement();
 			ResultSet rs = st.executeQuery("SELECT verified FROM match_verification WHERE matchID = " + match_id);
 
-			while(rs.next()) {
+			while (rs.next()) {
 				verified[i] = rs.getBoolean("verified");
 				i++;
 			}
@@ -192,7 +189,7 @@ public class VerificationDAOImp implements VerificationDAO {
 			Statement st = con.createStatement();
 			ResultSet rs = st.executeQuery("SELECT winner FROM pug_match WHERE match_id = " + match_id);
 
-			if(rs.next()){
+			if (rs.next()) {
 				String winner = rs.getString("winner");
 				con.close();
 				return winner;

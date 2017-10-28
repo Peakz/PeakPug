@@ -18,10 +18,11 @@ public class RemoveCommand {
 		PlayerObject player = new PlayerObject();
 		switch (mode) {
 			case "SOLOQ":
-				QueuePug qpug = queueManager.getQueuePug(mode);
+				QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
+				qpug.setCtx(ctx);
 				player = qpug.getPlayer(ctx.getAuthor().getStringID());
 
-				if(qpug.queuedPlayers.contains(player)) {
+				if (qpug.containsInstance((player))) {
 					player = qpug.getPlayer(ctx.getAuthor().getStringID());
 					qpug.removePlayer(mode, player);
 					ctx.getMessage().addReaction(":white_check_mark:");
@@ -31,10 +32,11 @@ public class RemoveCommand {
 				break;
 
 			case "RANKS":
-				qpug = queueManager.getQueuePug(mode);
+				qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
+				qpug.setCtx(ctx);
 				player = qpug.getPlayer(ctx.getAuthor().getStringID());
 
-				if(qpug.queuedPlayers.contains(player)) {
+				if (qpug.containsInstance((player))) {
 					qpug.removePlayer(mode, player);
 					ctx.getMessage().addReaction(":white_check_mark:");
 				} else {

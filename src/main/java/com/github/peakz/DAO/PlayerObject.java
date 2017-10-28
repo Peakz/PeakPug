@@ -1,7 +1,6 @@
 package com.github.peakz.DAO;
 
 import com.darichey.discord.CommandContext;
-import com.github.peakz.PugBot;
 import com.github.peakz.queues.QueuePug;
 
 import java.util.Timer;
@@ -9,14 +8,14 @@ import java.util.TimerTask;
 
 public class PlayerObject {
 
-	private Timer timer = new Timer();
-
 	private String id;
 	private String primaryRole;
 	private String secondaryRole;
 	private int rating;
 	private String roleFlag;
-	private PlayerNotification pn = new PlayerNotification();
+	private Timer timer;
+	private boolean soloq;
+	private boolean ranks;
 
 	public PlayerObject() {
 	}
@@ -36,6 +35,9 @@ public class PlayerObject {
 		this.primaryRole = primaryRole;
 		this.secondaryRole = secondaryRole;
 		this.rating = rating;
+		this.timer = new Timer();
+		this.soloq = false;
+		this.ranks = false;
 	}
 
 	public String getId() {
@@ -70,17 +72,43 @@ public class PlayerObject {
 		this.rating = rating;
 	}
 
-	public String getRoleFlag(){return roleFlag;}
+	public String getRoleFlag() {
+		return roleFlag;
+	}
 
-	public void setRoleFlag(String roleFlag){
+	public void setRoleFlag(String roleFlag) {
 		this.roleFlag = roleFlag;
 	}
 
-	public void scheduleNotification(CommandContext ctx, String mode, int status) {
+	public boolean isSoloq() {
+		return soloq;
+	}
+
+	public void setSoloq(boolean soloq) {
+		this.soloq = soloq;
+	}
+
+	public boolean isRanks() {
+		return ranks;
+	}
+
+	public void setRanks(boolean ranks) {
+		this.ranks = ranks;
+	}
+
+	public void scheduleNotification(CommandContext ctx, String mode, int status, QueuePug qpug) {
+		timer = new Timer();
+		PlayerNotification pn = new PlayerNotification();
 		if (status == 0) {
-			pn.setCtx(ctx);
-			pn.setMode(mode);
-			timer.scheduleAtFixedRate(pn, 900000, 900000);
+			try {
+				pn.setCtx(ctx);
+				pn.setMode(mode);
+				pn.setQpug(qpug);
+				pn.setPlayer(this);
+				timer.scheduleAtFixedRate(pn, 900000, 900000);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		} else {
 			timer.cancel();
 		}
@@ -90,30 +118,27 @@ public class PlayerObject {
 		private int notifications;
 		private String mode;
 		private CommandContext ctx;
+		private QueuePug qpug;
+		private PlayerObject player;
 
 		@Override
-		public void run(){
-			switch(notifications) {
+		public void run() {
+			switch (notifications) {
 				case 0:
-					System.out.println("1");
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to " + mode.toLowerCase() + " for " + 15 + " minutes in " + ctx.getGuild().getName());
+					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 15 + "` minutes in `" + ctx.getGuild().getName() + "`");
 					break;
 
 				case 1:
-					System.out.println("2");
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to " + mode.toLowerCase() + " for " + 30 + " minutes in " + ctx.getGuild().getName());
+					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 30 + "` minutes in `" + ctx.getGuild().getName() + "`");
 					break;
 
 				case 2:
-					System.out.println("3");
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to " + mode.toLowerCase() + " for " + 45 + " minutes. You'll be removed from the queue after 60 minutes!");
+					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 45 + "` minutes. You'll be removed from the queue after 60 minutes!");
 					break;
 
 				case 3:
-					System.out.println("4");
-					QueuePug qpug = PugBot.queueInstances.get(ctx.getGuild()).getQueuePug(mode);
-					qpug.removePlayer(mode, qpug.getPlayer(ctx.getAuthor().getStringID()));
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been removed from the queue in" + ctx.getGuild().getName());
+					qpug.removePlayer(mode, player);
+					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been removed from the queue in `" + ctx.getGuild().getName() + "`");
 					notifications++;
 					break;
 
@@ -128,13 +153,17 @@ public class PlayerObject {
 			notifications++;
 		}
 
-		public void setMode(String mode) {
-			notifications = 0;
+		void setMode(String mode) {
+			this.notifications = 0;
 			this.mode = mode;
 		}
 
-		public void setNotifications(int notifications){
-			this.notifications = notifications;
+		void setQpug(QueuePug qpug) {
+			this.qpug = qpug;
+		}
+
+		void setPlayer(PlayerObject player) {
+			this.player = player;
 		}
 
 		public void setCtx(CommandContext ctx) {

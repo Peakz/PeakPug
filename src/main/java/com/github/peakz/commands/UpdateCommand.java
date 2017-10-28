@@ -19,8 +19,8 @@ public class UpdateCommand {
 		role1 = role1.toLowerCase();
 		role2 = role2.toLowerCase();
 
-		if(roleSwitch(role1) && roleSwitch(role2)) {
-			if(playerDAO.checkId(id)) {
+		if (roleSwitch(role1) && roleSwitch(role2)) {
+			if (playerDAO.checkId(id)) {
 				playerDAO.updatePlayerRoles(id, role1, role2);
 				ctx.getMessage().addReaction(":white_check_mark:");
 			} else {
@@ -31,7 +31,7 @@ public class UpdateCommand {
 
 	@SuppressWarnings("Duplicates")
 	private boolean roleSwitch(String role) {
-		switch(role) {
+		switch (role) {
 			case "mtank":
 			case "ftank":
 			case "hitscan":

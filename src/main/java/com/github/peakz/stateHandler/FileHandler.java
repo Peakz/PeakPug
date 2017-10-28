@@ -17,6 +17,7 @@ public class FileHandler {
 
 	/**
 	 * Creates a directory based on dirName.
+	 *
 	 * @param dirName
 	 */
 	public static void createDirectory(String dirName) {
@@ -29,6 +30,7 @@ public class FileHandler {
 
 	/**
 	 * Reads from file based on path.
+	 *
 	 * @param file
 	 * @return fileContents
 	 */
@@ -49,6 +51,7 @@ public class FileHandler {
 
 	/**
 	 * Writes to File using file as path, on a specific line.
+	 *
 	 * @param file
 	 * @param line
 	 * @param text
@@ -66,6 +69,7 @@ public class FileHandler {
 
 	/**
 	 * Writes to File using file as the path. Checks if it should overwrite.
+	 *
 	 * @param file
 	 * @param text
 	 * @param overwrite
@@ -94,6 +98,7 @@ public class FileHandler {
 
 	/**
 	 * Reads from a .Json File using path and returns DAO based on objClass.
+	 *
 	 * @param file
 	 * @param objClass
 	 * @return newObject
@@ -114,6 +119,7 @@ public class FileHandler {
 
 	/**
 	 * saves data DAO object using path.
+	 *
 	 * @param file
 	 * @param object
 	 */
@@ -130,6 +136,7 @@ public class FileHandler {
 
 	/**
 	 * Checks if a file exists in the specified path.
+	 *
 	 * @param path
 	 * @return boolean
 	 */
@@ -140,6 +147,7 @@ public class FileHandler {
 	/**
 	 * Checks if a path exists and contains a file with an object.
 	 * If not, it will initialize a new file.
+	 *
 	 * @param path
 	 * @param object
 	 */
@@ -149,6 +157,7 @@ public class FileHandler {
 
 	/**
 	 * Checks if an empty file exists and if not, it will initialize a new file as null.
+	 *
 	 * @param path
 	 */
 	public static void initFile(String path) {
@@ -157,6 +166,7 @@ public class FileHandler {
 
 	/**
 	 * Parses a json file and returns the data as a jsonObject.
+	 *
 	 * @param filePath
 	 * @return jsonObject
 	 */
@@ -176,6 +186,7 @@ public class FileHandler {
 
 	/**
 	 * Write a queue object to a file
+	 *
 	 * @param qp
 	 */
 	public static void writeQueueSerialized(QueuePug qp) {
@@ -191,6 +202,7 @@ public class FileHandler {
 
 	/**
 	 * Read a stored queue object from a file
+	 *
 	 * @return qp
 	 */
 	public static QueuePug readQueueSerialized() {

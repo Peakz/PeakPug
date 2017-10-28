@@ -31,7 +31,7 @@ public class TeamDAOImp implements TeamDAO {
 							"team.player_4_id," +
 							"team.player_5_id FROM team, pug_match WHERE team.team_id = pug_match.team_id_" + color + " AND pug_match.match_id =" + match_id);
 
-			if(rs.next()) {
+			if (rs.next()) {
 				TeamObject team = new TeamObject();
 				PlayerDAO playerDAO = new PlayerDAOImp();
 
@@ -74,6 +74,7 @@ public class TeamDAOImp implements TeamDAO {
 
 	/**
 	 * Insert a TeamObject into the db, doesn't take whole object, just the string ids.
+	 *
 	 * @param team
 	 */
 	@Override

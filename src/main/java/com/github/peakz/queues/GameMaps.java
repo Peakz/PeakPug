@@ -5,10 +5,10 @@ import java.util.Random;
 public class GameMaps {
 
 	// String arrays of each game mode and its respective maps.
-	private final String [] ESCORT = {"Dorado", "Route 66", "Watchpoint: Gibraltar", "Junkertown"};
-	private final String [] HYBRID = {"Eichenwalde", "Hollywood", "King's Row", "Numbani"};
-	private final String [] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
-	private final String [] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
+	private final String[] ESCORT = {"Dorado", "Route 66", "Watchpoint: Gibraltar", "Junkertown"};
+	private final String[] HYBRID = {"Eichenwalde", "Hollywood", "King's Row", "Numbani"};
+	private final String[] CONTROL = {"Ilios", "Lijiang Tower", "Nepal", "Oasis"};
+	private final String[] ASSAULT = {"Hanamura", "Horizon Lunar Colony", "Temple of Anubis", "Volskaya Industries"};
 	private final String[][] MODES = {ESCORT, HYBRID, CONTROL, ASSAULT};
 	private int antiRNG;
 
@@ -16,7 +16,7 @@ public class GameMaps {
 		this.antiRNG = 0;
 	}
 
-	public String selectMap(){
+	public String selectMap() {
 		Random random = new Random();
 		int n = random.nextInt(3);
 		int m;

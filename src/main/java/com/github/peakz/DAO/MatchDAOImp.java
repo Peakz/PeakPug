@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-public class MatchDAOImp implements MatchDAO{
+public class MatchDAOImp implements MatchDAO {
 
 	@Override
 	public ArrayList<MatchObject> getAllMatches(ArrayList<MatchObject> matches) {
@@ -120,7 +120,7 @@ public class MatchDAOImp implements MatchDAO{
 			Statement st = con.createStatement();
 			ResultSet rs = st.executeQuery("SELECT match_id FROM pug_match WHERE match_id = " + match_id);
 
-			if(rs.next()) {
+			if (rs.next()) {
 				con.close();
 				return true;
 			} else {

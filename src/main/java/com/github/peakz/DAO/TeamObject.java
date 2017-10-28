@@ -50,6 +50,7 @@ public class TeamObject {
 
 	/**
 	 * Constructor for a colored team with captain and players
+	 *
 	 * @param captain
 	 * @param player_1
 	 * @param player_2
@@ -135,7 +136,7 @@ public class TeamObject {
 	}
 
 	public void setPlayersNumber(PlayerObject player) {
-		if(player_1 == null) {
+		if (player_1 == null) {
 			player_1 = player;
 		} else if (player_2 == null) {
 			player_2 = player;
@@ -155,7 +156,7 @@ public class TeamObject {
 	public int checkEmptySlot() {
 		int i = -1;
 
-		if(captain == null) {
+		if (captain == null) {
 			i = 0;
 			return i;
 		} else if (player_1 == null) {
@@ -178,31 +179,31 @@ public class TeamObject {
 	}
 
 	public String checkEmptyRole(PlayerObject p) {
-			if(!gotMT && p.getRoleFlag().equals("mtank")) {
-				gotMT = true;
-				return "mtank";
-			} else if (!gotFT && p.getRoleFlag().equals("ftank")) {
-				gotFT = true;
-				return "ftank";
-			} else if (!gotHS && p.getRoleFlag().equals("hitscan")) {
-				gotHS = true;
-				return "hitscan";
-			} else if (!gotPJ && p.getRoleFlag().equals("projectile")) {
-				gotPJ = true;
-				return "projectile";
-			} else if (!gotFS && p.getRoleFlag().equals("fsupp")) {
-				gotFS = true;
-				return "fsupp";
-			} else if (!gotMS && p.getRoleFlag().equals("msupp")) {
-				gotMS = true;
-				return "msupp";
-			}
+		if (!gotMT && p.getRoleFlag().equals("mtank")) {
+			gotMT = true;
+			return "mtank";
+		} else if (!gotFT && p.getRoleFlag().equals("ftank")) {
+			gotFT = true;
+			return "ftank";
+		} else if (!gotHS && p.getRoleFlag().equals("hitscan")) {
+			gotHS = true;
+			return "hitscan";
+		} else if (!gotPJ && p.getRoleFlag().equals("projectile")) {
+			gotPJ = true;
+			return "projectile";
+		} else if (!gotFS && p.getRoleFlag().equals("fsupp")) {
+			gotFS = true;
+			return "fsupp";
+		} else if (!gotMS && p.getRoleFlag().equals("msupp")) {
+			gotMS = true;
+			return "msupp";
+		}
 		return null;
 	}
 
 	public PlayerObject withRole(String role) {
-		for(PlayerObject p : players) {
-			if(p.getRoleFlag().equals(role)) {
+		for (PlayerObject p : players) {
+			if (p.getRoleFlag().equals(role)) {
 				return p;
 			}
 		}

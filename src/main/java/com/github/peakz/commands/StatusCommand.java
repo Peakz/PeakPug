@@ -15,13 +15,10 @@ public class StatusCommand {
 	}
 
 	public void showStatus(String mode) {
-		QueuePug qpug = queueManager.getQueuePug(mode);
 		switch (mode) {
-
 			case "BOTH":
-				QueuePug qpug1 = queueManager.getQueuePug("SOLOQ");
-				QueuePug qpug2 = queueManager.getQueuePug("RANKS");
-
+				QueuePug qpug1 = queueManager.getQueuePug(ctx.getChannel(), "SOLOQ");
+				QueuePug qpug2 = queueManager.getQueuePug(ctx.getChannel(), "RANKS");
 				EmbedBuilder builder = new EmbedBuilder();
 
 				builder.appendField("SoloQ", "Total Players: `" + qpug1.getPlayersQueued() + "`"

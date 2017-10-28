@@ -76,12 +76,11 @@ public class PlayerDAOImp implements PlayerDAO {
 	/**
 	 * Insert a new player
 	 *
+	 * @param player
 	 * @see PlayerObject#setId(String)
 	 * @see PlayerObject#setPrimaryRole(String)
 	 * @see PlayerObject#setSecondaryRole(String)
 	 * @see PlayerObject#setRating(int)
-	 *
-	 * @param player
 	 */
 	@Override
 	public void insertPlayer(PlayerObject player) {
@@ -96,8 +95,8 @@ public class PlayerDAOImp implements PlayerDAO {
 							+ "VALUES (?, ?, ?, ?)");
 
 			pst.setString(1, player.getId());
-			pst.setString(2, player.getPrimaryRole().toUpperCase());
-			pst.setString(3, player.getSecondaryRole().toUpperCase());
+			pst.setString(2, player.getPrimaryRole().toLowerCase());
+			pst.setString(3, player.getSecondaryRole().toLowerCase());
 			pst.setInt(4, player.getRating());
 			pst.executeUpdate();
 
@@ -110,11 +109,10 @@ public class PlayerDAOImp implements PlayerDAO {
 	/**
 	 * Update the player
 	 *
+	 * @param player
 	 * @see PlayerObject#setPrimaryRole(String)
 	 * @see PlayerObject#setSecondaryRole(String)
 	 * @see PlayerObject#setRating(int)
-	 *
-	 * @param player
 	 */
 	@Override
 	public void updatePlayer(PlayerObject player) {
@@ -122,8 +120,8 @@ public class PlayerDAOImp implements PlayerDAO {
 		try {
 			PreparedStatement pst = con.prepareStatement("UPDATE player SET primary_role = ?, secondary_role = ?, rating = ? WHERE id =" + player.getId());
 
-			pst.setString(1, player.getPrimaryRole().toUpperCase());
-			pst.setString(2, player.getSecondaryRole().toUpperCase());
+			pst.setString(1, player.getPrimaryRole().toLowerCase());
+			pst.setString(2, player.getSecondaryRole().toLowerCase());
 			pst.setInt(3, player.getRating());
 			pst.executeUpdate();
 
@@ -169,7 +167,7 @@ public class PlayerDAOImp implements PlayerDAO {
 	 * Check if a player is registered in the db
 	 *
 	 * @param player_id
-	 * @return 		true if registered, false if not
+	 * @return true if registered, false if not
 	 */
 	@Override
 	public boolean checkId(String player_id) {
@@ -206,7 +204,7 @@ public class PlayerDAOImp implements PlayerDAO {
 			ResultSet rs = st
 					.executeQuery("SELECT primary_role, secondary_role FROM player WHERE id= " + player_id);
 
-			if(rs.next() && (rs.getString("primary_role").equals(primaryRole) && (rs.getString("secondary_role").equals(secondaryRole)))) {
+			if (rs.next() && (rs.getString("primary_role").equals(primaryRole) && (rs.getString("secondary_role").equals(secondaryRole)))) {
 				con.close();
 				return true;
 			}
@@ -237,9 +235,8 @@ public class PlayerDAOImp implements PlayerDAO {
 	/**
 	 * Update the player's mmr
 	 *
-	 * @see PlayerObject#setRating(int)
-	 *
 	 * @param player
+	 * @see PlayerObject#setRating(int)
 	 */
 	@Override
 	public void updatePlayerMMR(PlayerObject player) {

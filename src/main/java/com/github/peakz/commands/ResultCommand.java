@@ -19,21 +19,21 @@ public class ResultCommand {
 		MatchObject match = matchDAO.getMatch(id);
 
 		// Check if id belongs to verification
-		if(vDAO.checkCaptain(id, ctx.getAuthor().getStringID())) {
-			if(!match.getWinner().equals(winner.toUpperCase())) {
+		if (vDAO.checkCaptain(id, ctx.getAuthor().getStringID())) {
+			if (!match.getWinner().equals(winner.toUpperCase())) {
 				// Check if the verification is verified
 				VerificationObject vo = vDAO.getVerification(id, ctx.getAuthor().getStringID());
 				if (vo.isVerified()) {
 					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You have already submitted your verification for this match!");
 					ctx.getMessage().addReaction(":white_check_mark:");
 
-				// else if match has a winner but verification isn't verified
+					// else if match has a winner but verification isn't verified
 				} else if (match.getWinner().equals(winner.toUpperCase()) && match.getWinner() != null) {
 					vo.setVerified(true);
 					vDAO.updateVerification(vo);
 					ctx.getMessage().addReaction(":white_check_mark:");
 
-				// else if match isn't verified
+					// else if match isn't verified
 				} else if (match.getWinner().equals("NONE")) {
 					match.setWinner(winner);
 					vo.setVerified(true);

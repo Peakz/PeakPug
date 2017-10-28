@@ -2,18 +2,15 @@ package com.github.peakz.queues;
 
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.*;
-import com.github.peakz.stateHandler.FileHandler;
 import sx.blah.discord.util.EmbedBuilder;
 
 import java.io.Serializable;
 import java.util.*;
 
-public class QueuePug implements Serializable{
-
-	private static final long serialQueue = 1L;
-	public ArrayList<PlayerObject> queuedPlayers;
+public class QueuePug implements Serializable {
 
 	private boolean aboutToPop = false;
+	private ArrayList<PlayerObject> queuedPlayers;
 	private MatchObject match;
 	private GameMaps gameMaps;
 
@@ -31,7 +28,7 @@ public class QueuePug implements Serializable{
 
 	private CommandContext ctx;
 
-	public QueuePug(){
+	QueuePug() {
 		this.match = new MatchObject();
 		this.queuedPlayers = new ArrayList<>();
 		this.roleCount1 = new HashMap<>();
@@ -51,23 +48,24 @@ public class QueuePug implements Serializable{
 		this.ctx = ctx;
 		switch (mode) {
 			case "SOLOQ":
-				if(!aboutToPop) {
+				if (!aboutToPop) {
 					addRole(mode, player);
 					/*
 					 * check if soloq can start with 2/2/2 possible
 					 * and if it isn't, it won't start and will wait until
 					 * there's enough players in each role to start.
 					 */
-					if(aboutToPop) {
+					if (aboutToPop) {
 						aboutToPop = !balanceComps(mode);
 					}
+					break;
 				} else {
 					ctx.getMessage().getChannel().sendMessage("Queue popped and match is being made, please try again in a sec");
 				}
 				break;
 
 			case "RANKS":
-				if(!aboutToPop) {
+				if (!aboutToPop) {
 					addRole(mode, player);
 				/*
 				 * 	check if ranks can start with 2/2/2 possible
@@ -77,6 +75,7 @@ public class QueuePug implements Serializable{
 					if (aboutToPop) {
 						aboutToPop = !balanceComps(mode);
 					}
+					break;
 				} else {
 					ctx.getMessage().getChannel().sendMessage("Please wait until pick phase is over!");
 				}
@@ -88,15 +87,17 @@ public class QueuePug implements Serializable{
 	}
 
 	public void removePlayer(String mode, PlayerObject player) {
-		switch(mode) {
+		switch (mode) {
 			case "SOLOQ":
-				if(minusPlayer(player)){
+				if (minusPlayer(player)) {
+					player.scheduleNotification(ctx, "", 1, this);
 					break;
 				}
 				break;
 
 			case "RANKS":
-				if(minusPlayer(player)){
+				if (minusPlayer(player)) {
+					player.scheduleNotification(ctx, "", 1, this);
 					break;
 				}
 				break;
@@ -109,10 +110,10 @@ public class QueuePug implements Serializable{
 	@SuppressWarnings("Duplicates")
 	public void pickPlayer(String color, String number) {
 		PlayerObject p = ranks.get(Integer.parseInt(number));
-		if(ranks.contains(p)) {
+		if (ranks.contains(p)) {
 			if (color.equals("RED")) {
 				TeamObject red = match.getTeam_red();
-				if(red.getCaptain().getId().equals(ctx.getAuthor().getStringID())) {
+				if (red.getCaptain().getId().equals(ctx.getAuthor().getStringID())) {
 					if (red.checkEmptyRole(p).equals(ranks.get(Integer.parseInt(number)).getRoleFlag())) {
 						red.setPlayersNumber(ranks.get(Integer.parseInt(number)));
 						minusPlayer(ranks.get(Integer.parseInt(number)));
@@ -125,7 +126,7 @@ public class QueuePug implements Serializable{
 				}
 			} else {
 				TeamObject blue = match.getTeam_blue();
-				if(blue.getCaptain().getId().equals(ctx.getAuthor().getStringID())) {
+				if (blue.getCaptain().getId().equals(ctx.getAuthor().getStringID())) {
 					if (blue.checkEmptyRole(p).equals(ranks.get(Integer.parseInt(number)).getRoleFlag())) {
 						blue.setPlayersNumber(ranks.get(Integer.parseInt(number)));
 						minusPlayer(ranks.get(Integer.parseInt(number)));
@@ -141,15 +142,19 @@ public class QueuePug implements Serializable{
 	}
 
 	private boolean minusPlayer(PlayerObject player) {
+		if (player.isSoloq()) {
+			player.setSoloq(false);
+		} else if (player.isRanks()) {
+			player.setRanks(false);
+		}
 		queuedPlayers.remove(player);
-		player.scheduleNotification(ctx, "", 1);
-		if(roleCount1.containsKey(player)) {
+		if (roleCount1.containsKey(player)) {
 			roleCount1.remove(player, player.getRoleFlag());
-		} else if (roleCount2.containsKey(player)){
+		} else if (roleCount2.containsKey(player)) {
 			roleCount2.remove(player, player.getRoleFlag());
 		}
 
-		switch(player.getRoleFlag()) {
+		switch (player.getRoleFlag()) {
 			case "mtank":
 				mtank--;
 				return true;
@@ -181,20 +186,22 @@ public class QueuePug implements Serializable{
 
 	// Added when queueing for soloq
 	private void addRole(String mode, PlayerObject player) {
-		if(addRoleSwitch(player, "first")) {
+		if (addRoleSwitch(player, "first")) {
 			queuedPlayers.add(player);
-			player.scheduleNotification(ctx, mode, 0);
+			player.scheduleNotification(ctx, mode, 0, this);
 		} else if (addRoleSwitch(player, "second")) {
 			queuedPlayers.add(player);
-			player.scheduleNotification(ctx, mode, 0);
+			player.scheduleNotification(ctx, mode, 0, this);
 		}
 
-		if(mode.equals("SOLOQ")) {
+		if (mode.equals("SOLOQ")) {
+			player.setSoloq(true);
 			// lock queue
 			if (queuedPlayers.size() == 12 || queuedPlayers.size() > 12) {
 				aboutToPop = true;
 			}
 		} else if (mode.equals("RANKS")) {
+			player.setRanks(true);
 			// lock queue
 			if (queuedPlayers.size() == 13 || queuedPlayers.size() > 13) {
 				aboutToPop = true;
@@ -207,7 +214,7 @@ public class QueuePug implements Serializable{
 		String primaryRole = player.getPrimaryRole();
 		String secondaryRole = player.getSecondaryRole();
 		String roleFlag;
-		if (primaryRole.equals("mtank") && whichRole.equals("first")) {
+		if (primaryRole.equals("mtank") && whichRole.equals("first") && mtank < 2) {
 			player.setRoleFlag("mtank");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -219,7 +226,7 @@ public class QueuePug implements Serializable{
 			roleCount2.put(player, roleFlag);
 			mtank++;
 			return true;
-		} else if ((primaryRole.equals("ftank")) && whichRole.equals("first")) {
+		} else if ((primaryRole.equals("ftank")) && whichRole.equals("first") && ftank < 2) {
 			player.setRoleFlag("ftank");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -231,7 +238,7 @@ public class QueuePug implements Serializable{
 			roleCount2.put(player, roleFlag);
 			ftank++;
 			return true;
-		} else if (primaryRole.equals("hitscan") && whichRole.equals("first")) {
+		} else if (primaryRole.equals("hitscan") && whichRole.equals("first") && hitscan < 2) {
 			player.setRoleFlag("hitscan");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -243,7 +250,7 @@ public class QueuePug implements Serializable{
 			roleCount2.put(player, roleFlag);
 			hitscan++;
 			return true;
-		} else if (primaryRole.equals("projectile") && whichRole.equals("first")) {
+		} else if (primaryRole.equals("projectile") && whichRole.equals("first") && projectile < 2) {
 			player.setRoleFlag("projectile");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -255,7 +262,7 @@ public class QueuePug implements Serializable{
 			roleCount2.put(player, roleFlag);
 			projectile++;
 			return true;
-		} else if (primaryRole.equals("fsupp") && whichRole.equals("first")) {
+		} else if (primaryRole.equals("fsupp") && whichRole.equals("first") && fsupp < 2) {
 			player.setRoleFlag("fsupp");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -267,7 +274,7 @@ public class QueuePug implements Serializable{
 			roleCount2.put(player, roleFlag);
 			fsupp++;
 			return true;
-		} else if (primaryRole.equals("msupp") && whichRole.equals("first")) {
+		} else if (primaryRole.equals("msupp") && whichRole.equals("first") && msupp < 2) {
 			player.setRoleFlag("msupp");
 			roleFlag = player.getRoleFlag();
 			roleCount1.put(player, roleFlag);
@@ -283,7 +290,7 @@ public class QueuePug implements Serializable{
 		return false;
 	}
 
-	private ArrayList<PlayerObject> sortRating(ArrayList<PlayerObject> tempList) {
+	private void sortRating(ArrayList<PlayerObject> tempList) {
 		for (PlayerObject p : tempList) {
 			if ((tempList.indexOf(p) + 1) != 12) {
 				PlayerObject nextPlayer = tempList.get(tempList.indexOf(p) + 1);
@@ -292,7 +299,6 @@ public class QueuePug implements Serializable{
 				}
 			}
 		}
-		return tempList;
 	}
 
 	@SuppressWarnings("Duplicates")
@@ -313,14 +319,14 @@ public class QueuePug implements Serializable{
 			ArrayList<PlayerObject> tempList = new ArrayList<>(queuedPlayers);
 
 			// If it's SoloQ
-			if(mode.equals("SOLOQ")) {
+			if (mode.equals("SOLOQ")) {
 
 				// Sort by rating
 				sortRating(tempList);
 
 				// Add players to teams & start
 				return startSoloQ(tempList, rArr, r, bArr, b, turn);
-			// If it's Rank S
+				// If it's Rank S
 			} else if (mode.equals("RANKS")) {
 				return startRankS(tempList);
 			}
@@ -336,7 +342,6 @@ public class QueuePug implements Serializable{
 
 		// Add players to teams
 		for (PlayerObject p : players) {
-			p.scheduleNotification(ctx, "SOLOQ", 1);
 			boolean r1Found = roleCount1.containsKey(p);
 			boolean r2Found = roleCount2.containsKey(p);
 
@@ -400,7 +405,7 @@ public class QueuePug implements Serializable{
 		return false;
 	}
 
-	private void createVerifications(MatchObject match){
+	private void createVerifications(MatchObject match) {
 		VerificationDAO vDAO = new VerificationDAOImp();
 
 		vDAO.insertVerification(match.getId(), "" + match.getTeam_red().getCaptain().getId(), false);
@@ -415,7 +420,7 @@ public class QueuePug implements Serializable{
 		red.setCaptain(queuedPlayers.get(rand.nextInt(queuedPlayers.size())));
 		blue.setCaptain(queuedPlayers.get(rand.nextInt(queuedPlayers.size())));
 
-		if(red.getCaptain() != null && blue.getCaptain() != null) {
+		if (red.getCaptain() != null && blue.getCaptain() != null) {
 			match.setTeam_red(red);
 			match.setTeam_blue(blue);
 			ranks = new ArrayList<>(players);
@@ -432,72 +437,66 @@ public class QueuePug implements Serializable{
 		return false;
 	}
 
-	public void discountRole(PlayerObject p) {
-		switch(p.getRoleFlag()){
-			case "mtank":
-				mtank--;
-				break;
-			case "ftank":
-				ftank--;
-				break;
-			case "hitscan":
-				hitscan--;
-				break;
-			case "projectile":
-				projectile--;
-				break;
-			case "fsupp":
-				fsupp--;
-				break;
-			case "msupp":
-				msupp--;
-				break;
-			default:
-				break;
-		}
-	}
-
 	public void setCtx(CommandContext ctx) {
 		this.ctx = ctx;
 	}
 
-	public int getPlayersQueued() {return queuedPlayers.size();}
-	public int getRanksPool() {return ranks.size();}
-	public int getMTQueud() {return mtank;}
-	public int getFTQueued() {return ftank;}
-	public int getHSQueued() {return hitscan;}
-	public int getPJQueued() {return projectile;}
-	public int getFSQueued() {return fsupp;}
-	public int getMSQueued() {return msupp;}
+	public int getPlayersQueued() {
+		return queuedPlayers.size();
+	}
+
+	public int getRanksPool() {
+		return ranks.size();
+	}
+
+	public int getMTQueud() {
+		return mtank;
+	}
+
+	public int getFTQueued() {
+		return ftank;
+	}
+
+	public int getHSQueued() {
+		return hitscan;
+	}
+
+	public int getPJQueued() {
+		return projectile;
+	}
+
+	public int getFSQueued() {
+		return fsupp;
+	}
+
+	public int getMSQueued() {
+		return msupp;
+	}
 
 	public boolean containsInstance(PlayerObject c) {
-		return queuedPlayers.stream().anyMatch(e -> e.getId().equals(c.getId()));
+		return queuedPlayers.stream().anyMatch(x -> x.getId().equals(c.getId()));
+	}
+
+	public boolean isAboutToPop() {
+		return aboutToPop;
+	}
+
+	public void setAboutToPop(boolean aboutToPop) {
+		this.aboutToPop = aboutToPop;
 	}
 
 	public PlayerObject getPlayer(String id) {
-		for(PlayerObject p : queuedPlayers) {
-			if(p.getId().equals(id)) {
+		for (PlayerObject p : queuedPlayers) {
+			if (p.getId().equals(id)) {
 				return p;
 			}
 		}
 		return null;
 	}
 
-	public MatchObject getMatch() {
-		return match;
-	}
-
-	private void storeQueue() {
-		FileHandler.writeQueueSerialized(this);
-	}
-
-	private void getStoredQueue() {
-		FileHandler.readQueueSerialized();
-	}
-
 	private void makeMatchMessage(String mode) {
 		EmbedBuilder builder = new EmbedBuilder();
-		if(mode.equals("SOLOQ")) {
+		if (mode.equals("SOLOQ")) {
 			// Average mmr + captains
 			builder.appendField("RED TEAM MMR", "" + match.getTeam_red().getAvgRating(), true);
 			builder.appendField("BLUE TEAM MMR", "" + match.getTeam_blue().getAvgRating(), true);
@@ -534,20 +533,17 @@ public class QueuePug implements Serializable{
 			builder.appendField("Available Main Supports", "" + rolePoolMsg("msupp"), true);
 		}
 
-
 		builder.withDescription("MAP - " + match.getMap());
 
 		MatchDAO matchDAO = new MatchDAOImp();
-		if(mode.equals("SOLOQ")) {
+		if (mode.equals("SOLOQ")) {
 			builder.withColor(55, 240, 27);
 			builder.withTitle("MATCH ID: " + match.getId());
+			builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
 		} else {
 			builder.withColor(228, 38, 38);
 			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).getName() + " - MATCH ID: " + matchDAO.getLastMatchID());
 		}
-
-
-		builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
 		GameMaps gameMaps = new GameMaps();
 		builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
 		ctx.getMessage().getChannel().sendMessage(builder.build());
@@ -555,22 +551,22 @@ public class QueuePug implements Serializable{
 
 	private String rolePoolMsg(String role) {
 		String str = "";
-		switch(role) {
+		switch (role) {
 			case "mtank":
 			case "ftank":
 			case "hitscan":
 			case "projectile":
 			case "fsupp":
 			case "msupp":
-				for(int i = 0; i < ranks.size(); i++) {
-					if(ranks.get(i).getRoleFlag().equals(role)) {
+				for (int i = 0; i < ranks.size(); i++) {
+					if (ranks.get(i).getRoleFlag().equals(role)) {
 						str += (i + 1) + ". " + ctx.getGuild().getUserByID(Long.valueOf(ranks.get(i).getId())).getName() + "\n";
 						//str += (i + 1) + ". " + ctx.getAuthor().getName() + " " + role + "\n";
 					}
 				}
 				break;
 		}
-		if(!str.equals("")){
+		if (!str.equals("")) {
 			return str;
 		}
 		return "None";
@@ -589,21 +585,54 @@ public class QueuePug implements Serializable{
 		builder.appendField("Available Flex Supports", "" + rolePoolMsg("fsupp"), true);
 		builder.appendField("Available Main Supports", "" + rolePoolMsg("msupp"), true);
 
-		if(color.equals("RED")) {
-			builder.withColor(228, 38, 38);
-			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
-		} else if (color.equals("BLUE")) {
-			builder.withColor(24, 109, 238);
-			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
-		} else {
-			builder.withColor(55, 240, 27);
-			builder.withTitle("RANK S - PICK PHASE - FINISHED - MATCH ID: " + match.getId());
+		switch (color) {
+			case "RED":
+				builder.withColor(228, 38, 38);
+				builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
+				break;
+			case "BLUE":
+				builder.withColor(24, 109, 238);
+				builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention() + " - MATCH ID: " + match.getId());
+				break;
+			default:
+				builder.withColor(55, 240, 27);
+				builder.withTitle("RANK S - PICK PHASE - FINISHED - MATCH ID: " + match.getId());
+				break;
 		}
 		builder.withDescription("MAP - " + match.getMap());
 
+		GameMaps gameMaps = new GameMaps();
+		builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
+		ctx.getMessage().getChannel().sendMessage(builder.build());
+	}
+
+	public void finalRanksMessage() {
+		EmbedBuilder builder = new EmbedBuilder();
+
+		builder.appendField("Red Team Captain" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention(), "" + match.getTeam_red().getCaptain().getRoleFlag(), true);
+		builder.appendField("Blue Team Captain" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention(), "" + match.getTeam_blue().getCaptain().getRoleFlag(), true);
+
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getPlayer_1().getId())).mention(), "" + match.getTeam_red().getPlayer_1().getRoleFlag(), true);
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_1().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
+
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getPlayer_2().getId())).mention(), "" + match.getTeam_red().getPlayer_1().getRoleFlag(), true);
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_2().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
+
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getPlayer_3().getId())).mention(), "" + match.getTeam_red().getPlayer_1().getRoleFlag(), true);
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_3().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
+
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getPlayer_4().getId())).mention(), "" + match.getTeam_red().getPlayer_1().getRoleFlag(), true);
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_4().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
+
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getPlayer_5().getId())).mention(), "" + match.getTeam_red().getPlayer_1().getRoleFlag(), true);
+		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_5().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
 
 
-		builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
+		builder.withColor(228, 38, 38);
+		builder.withTitle("RANK S - STARTING" + " - MATCH ID: " + match.getId());
+		builder.withDescription("MAP - " + match.getMap());
+
+		builder.withFooterText("GL HF!");
 		GameMaps gameMaps = new GameMaps();
 		builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
 		ctx.getMessage().getChannel().sendMessage(builder.build());
