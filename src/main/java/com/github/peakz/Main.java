@@ -6,7 +6,6 @@ import sx.blah.discord.api.events.EventDispatcher;
 import sx.blah.discord.util.DiscordException;
 
 public class Main {
-	public static Main INSTANCE; // Singleton instance of the bot.
 	public IDiscordClient client; // The instance of the discord client.
 
 	public Main(IDiscordClient client) {
@@ -14,7 +13,7 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		INSTANCE = login(args[0]); // Gets the client object (from the first example)
+		Main INSTANCE = login(args[0]);
 		EventDispatcher dispatcher = INSTANCE.client.getDispatcher(); // Gets the EventDispatcher instance for this client instance
 		dispatcher.registerListener(new AnnotationListener()); // Registers the @EventSubscriber example class from above
 		PugBot.createCommands(INSTANCE.client);

@@ -5,6 +5,8 @@ import com.github.peakz.queues.QueuePug;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerObject {
 
@@ -14,6 +16,7 @@ public class PlayerObject {
 	private int rating;
 	private String roleFlag;
 	private Timer timer;
+	private PlayerNotification pn;
 
 	public PlayerObject() {
 	}
@@ -34,7 +37,6 @@ public class PlayerObject {
 		this.secondaryRole = secondaryRole;
 		this.roleFlag = "";
 		this.rating = rating;
-		this.timer = new Timer();
 	}
 
 	public String getId() {
@@ -78,39 +80,40 @@ public class PlayerObject {
 	}
 
 	public void scheduleNotification(CommandContext ctx, String mode, int status, QueuePug qpug) {
-		timer = new Timer();
-		PlayerNotification pn = new PlayerNotification();
 		if (status == 0) {
 			try {
-				pn.setCtx(ctx);
-				pn.setMode(mode);
-				pn.setQpug(qpug);
-				pn.setPlayer(this);
+				this.timer = new Timer();
+				this.pn = new PlayerNotification();
+				pn.setAll(ctx, mode, qpug, this);
 				timer.scheduleAtFixedRate(pn, 900000, 900000);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		} else {
-			timer.cancel();
+			try {
+				timer.cancel();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	private class PlayerNotification extends TimerTask {
-		private int notifications;
+		private AtomicInteger notifications;
 		private String mode;
 		private CommandContext ctx;
-		private QueuePug qpug;
-		private PlayerObject player;
+		private AtomicReference<QueuePug> qpug;
+		private AtomicReference<PlayerObject> player;
 
 		@Override
 		public void run() {
-			switch (notifications) {
+			switch (notifications.get()) {
 				case 0:
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 15 + "` minutes in `" + ctx.getGuild().getName() + "`");
+					//ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 15 + "` minutes in `" + ctx.getGuild().getName()"`");
 					break;
 
 				case 1:
-					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 30 + "` minutes in `" + ctx.getGuild().getName() + "`");
+					//ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been queued to `" + mode.toLowerCase() + "` for `" + 30 + "` minutes in `" + ctx.getGuild().getName()+ "`");
 					break;
 
 				case 2:
@@ -118,37 +121,28 @@ public class PlayerObject {
 					break;
 
 				case 3:
-					qpug.removePlayer(mode, player);
+					qpug.get().removePlayer(mode, player.get());
 					ctx.getAuthor().getOrCreatePMChannel().sendMessage("You've been removed from the queue in `" + ctx.getGuild().getName() + "`");
-					notifications++;
+					notifications.getAndIncrement();
 					break;
 
 				case 4:
-					this.cancel();
+					timer.cancel();
 					break;
 
 				default:
-					notifications++;
+					notifications.getAndIncrement();
 					break;
 			}
-			notifications++;
+			notifications.getAndIncrement();
 		}
 
-		void setMode(String mode) {
-			this.notifications = 0;
-			this.mode = mode;
-		}
-
-		void setQpug(QueuePug qpug) {
-			this.qpug = qpug;
-		}
-
-		void setPlayer(PlayerObject player) {
-			this.player = player;
-		}
-
-		public void setCtx(CommandContext ctx) {
+		void setAll(CommandContext ctx, String mode, QueuePug qpug, PlayerObject player) {
 			this.ctx = ctx;
+			this.mode = mode;
+			this.notifications = new AtomicInteger();
+			this.qpug = new AtomicReference<>(qpug);
+			this.player = new AtomicReference<>(player);
 		}
 	}
 }

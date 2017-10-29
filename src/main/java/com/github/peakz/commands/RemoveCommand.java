@@ -19,7 +19,6 @@ public class RemoveCommand {
 		switch (mode) {
 			case "SOLOQ":
 				QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
-				qpug.setCtx(ctx);
 				player = qpug.getPlayer(ctx.getAuthor().getStringID());
 
 				if (qpug.containsInstance((player))) {
@@ -33,7 +32,6 @@ public class RemoveCommand {
 
 			case "RANKS":
 				qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
-				qpug.setCtx(ctx);
 				player = qpug.getPlayer(ctx.getAuthor().getStringID());
 
 				if (qpug.containsInstance((player))) {

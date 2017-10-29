@@ -15,14 +15,13 @@ public class PickCommand {
 
 	public void pickPlayer(String number) {
 		QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), "RANKS");
-		qpug.setCtx(ctx);
+
 		int n = qpug.getRanksPool();
 		if (qpug.isAboutToPop()) {
 			// If it's red's turn
 			// else if it's blue's turn
 			if (qpug.getRanksPool() == 1) {
 				qpug.finalRanksMessage();
-				qpug.setAboutToPop(false);
 			} else {
 				if (n % 2 == 1) qpug.pickPlayer("RED", number);
 				else qpug.pickPlayer("BLUE", number);

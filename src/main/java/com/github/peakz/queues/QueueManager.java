@@ -1,25 +1,16 @@
 package com.github.peakz.queues;
 
-import com.darichey.discord.CommandContext;
-import com.github.peakz.DAO.PlayerObject;
-import com.github.peakz.PugBot;
 import sx.blah.discord.handle.obj.IChannel;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class QueueManager {
 	private IChannel channel;
-	private HashMap<String, QueuePug> queueInstances;
-	private Map<IChannel, HashMap<String, QueuePug>> channelInstances;
-
-	public QueueManager() {
-	}
+	private ConcurrentHashMap<String, QueuePug> queueInstances = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<IChannel, ConcurrentHashMap<String, QueuePug>> channelInstances = new ConcurrentHashMap<>();
 
 	public QueueManager(IChannel channel) {
 		this.channel = channel;
-		this.queueInstances = new HashMap<>();
-		channelInstances = new HashMap<>();
 	}
 
 	public void addQueueHelperInstances() {
@@ -32,12 +23,8 @@ public class QueueManager {
 		//queueInstances.put("DUOQ", new QueuePug());
 	}
 
-	public boolean isQueued(CommandContext ctx, PlayerObject player) {
-		return (PugBot.queueInstances.get(ctx.getChannel()).getQueuePug(ctx.getChannel(), "SOLOQ").containsInstance(player) ||
-				PugBot.queueInstances.get(ctx.getChannel()).getQueuePug(ctx.getChannel(), "RANKS").containsInstance(player));
-	}
-
 	public QueuePug getQueuePug(IChannel channel, String mode) {
+		mode = mode.toUpperCase();
 		return channelInstances.get(channel).get(mode);
 	}
 }

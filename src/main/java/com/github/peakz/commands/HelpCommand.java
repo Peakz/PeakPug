@@ -37,6 +37,7 @@ public class HelpCommand {
 		builder.appendField("!Rating", "Shows your rating, only SoloQ atm", true);
 		builder.appendField("!Status", "Queue status for SoloQ and Rank S", true);
 		builder.appendField("!Wiki", "Link to wiki page", true);
+		builder.appendField("!Queued", "Shows queued players and their roles", false);
 
 
 		builder.withColor(185, 255, 173);
