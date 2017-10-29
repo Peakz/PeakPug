@@ -3,6 +3,7 @@ package com.github.peakz.commands;
 import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.PlayerDAO;
 import com.github.peakz.DAO.PlayerDAOImp;
+import com.github.peakz.PugBot;
 
 public class UpdateCommand {
 
@@ -21,8 +22,12 @@ public class UpdateCommand {
 
 		if (roleSwitch(role1) && roleSwitch(role2)) {
 			if (playerDAO.checkId(id)) {
-				playerDAO.updatePlayerRoles(id, role1, role2);
-				ctx.getMessage().addReaction(":white_check_mark:");
+				if(PugBot.queueInstances.get(ctx.getChannel()).isQueued(ctx, playerDAO.getPlayer(id))) {
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Remove yourself from the queue before updating roles!");
+				} else {
+					playerDAO.updatePlayerRoles(id, role1, role2);
+					ctx.getMessage().addReaction(":white_check_mark:");
+				}
 			} else {
 				ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're not registered yet! Type !Help");
 			}

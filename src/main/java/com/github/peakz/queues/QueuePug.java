@@ -56,14 +56,13 @@ public class QueuePug implements Serializable {
 					 * there's enough players in each role to start.
 					 */
 					if (aboutToPop) {
-						aboutToPop = !balanceComps(mode);
+						aboutToPop = balanceComps(mode);
 					} else {
 						aboutToPop = false;
 					}
 					break;
-				} else {
+				} else
 					ctx.getMessage().getChannel().sendMessage("Queue popped and match is being made, please try again in a sec");
-				}
 				break;
 
 			case "RANKS":
@@ -75,7 +74,7 @@ public class QueuePug implements Serializable {
 				 * 	it will wait.
 				 */
 					if (aboutToPop) {
-						aboutToPop = !balanceComps(mode);
+						aboutToPop = balanceComps(mode);
 					} else {
 						aboutToPop = false;
 					}
@@ -121,7 +120,7 @@ public class QueuePug implements Serializable {
 					if (red.checkEmptyRole(p).equals(ranks.get(Integer.parseInt(number)).getRoleFlag())) {
 						red.setPlayersNumber(ranks.get(Integer.parseInt(number)));
 						minusPlayer(ranks.get(Integer.parseInt(number)));
-						makePickPhaseMessage(color);
+						makePickPhaseMessage("BLUE");
 					} else {
 						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your team already has that role!");
 					}
@@ -134,7 +133,7 @@ public class QueuePug implements Serializable {
 					if (blue.checkEmptyRole(p).equals(ranks.get(Integer.parseInt(number)).getRoleFlag())) {
 						blue.setPlayersNumber(ranks.get(Integer.parseInt(number)));
 						minusPlayer(ranks.get(Integer.parseInt(number)));
-						makePickPhaseMessage(color);
+						makePickPhaseMessage("RED");
 					} else {
 						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Your team already has that role!");
 					}
@@ -292,9 +291,11 @@ public class QueuePug implements Serializable {
 	private void sortRating(ArrayList<PlayerObject> tempList) {
 		for (PlayerObject p : tempList) {
 			if ((tempList.indexOf(p) + 1) != 12) {
-				PlayerObject nextPlayer = tempList.get(tempList.indexOf(p) + 1);
-				if ((nextPlayer != null) && (p.getRating() > nextPlayer.getRating())) {
-					Collections.swap(tempList, tempList.indexOf(p), tempList.indexOf(nextPlayer));
+				if((tempList.indexOf(p) + 1) != 13) {
+					PlayerObject nextPlayer = tempList.get(tempList.indexOf(p) + 1);
+					if ((nextPlayer != null) && (p.getRating() > nextPlayer.getRating())) {
+						Collections.swap(tempList, tempList.indexOf(p), tempList.indexOf(nextPlayer));
+					}
 				}
 			}
 		}
@@ -328,6 +329,8 @@ public class QueuePug implements Serializable {
 				// If it's Rank S
 			} else if (mode.equals("RANKS")) {
 				return startRankS(tempList);
+			} else {
+				return false;
 			}
 		}
 		return false;
@@ -520,6 +523,16 @@ public class QueuePug implements Serializable {
 
 			builder.appendField("Main Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().withRole("msupp").getId())).mention(), true);
 			builder.appendField("Main Support", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().withRole("msupp").getId())).mention(), true);
+
+			builder.withColor(55, 240, 27);
+			builder.withTitle("MATCH ID: " + match.getId());
+			builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
+
+			builder.withDescription("MAP - " + match.getMap());
+
+			GameMaps gameMaps = new GameMaps();
+			builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
+			ctx.getMessage().getChannel().sendMessage(builder.build());
 		} else {
 			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention(), true);
 			builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).mention(), true);
@@ -530,22 +543,17 @@ public class QueuePug implements Serializable {
 			builder.appendField("Available Projectiles", "" + rolePoolMsg("projectile"), true);
 			builder.appendField("Available Flex Supports", "" + rolePoolMsg("fsupp"), true);
 			builder.appendField("Available Main Supports", "" + rolePoolMsg("msupp"), true);
-		}
 
-		builder.withDescription("MAP - " + match.getMap());
-
-		MatchDAO matchDAO = new MatchDAOImp();
-		if (mode.equals("SOLOQ")) {
-			builder.withColor(55, 240, 27);
-			builder.withTitle("MATCH ID: " + match.getId());
-			builder.withFooterText("Don't forget to report the result, \"!Result match_id winning_color\", GL HF!");
-		} else {
+			MatchDAO matchDAO = new MatchDAOImp();
 			builder.withColor(228, 38, 38);
 			builder.withTitle("RANK S - PICK PHASE - TURN TO PICK: " + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).getName() + " - MATCH ID: " + matchDAO.getLastMatchID());
+
+			builder.withDescription("MAP - " + match.getMap());
+
+			GameMaps gameMaps = new GameMaps();
+			builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
+			ctx.getMessage().getChannel().sendMessage(builder.build());
 		}
-		GameMaps gameMaps = new GameMaps();
-		builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
-		ctx.getMessage().getChannel().sendMessage(builder.build());
 	}
 
 	private String rolePoolMsg(String role) {
