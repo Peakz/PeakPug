@@ -11,7 +11,7 @@ public class LowFilterPug extends Filter<ILoggingEvent> {
 		if (event.getMessage().contains("changed presence")) {
 			return FilterReply.DENY;
 		} else {
-			return FilterReply.NEUTRAL;
+			return FilterReply.ACCEPT;
 		}
 	}
 }

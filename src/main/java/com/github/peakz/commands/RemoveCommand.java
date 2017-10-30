@@ -4,18 +4,21 @@ import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.queues.QueueManager;
 import com.github.peakz.queues.QueuePug;
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
 
 public class RemoveCommand {
 	private CommandContext ctx;
 	private QueueManager queueManager;
+	private PlayerObject player;
 
 	public RemoveCommand(CommandContext ctx, QueueManager queueManager) {
 		this.ctx = ctx;
 		this.queueManager = queueManager;
+		this.player = new PlayerObject();
 	}
 
 	public void removeFromMode(String mode) {
-		PlayerObject player = new PlayerObject();
 		switch (mode) {
 			case "SOLOQ":
 				QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
@@ -24,7 +27,9 @@ public class RemoveCommand {
 				if (qpug.containsInstance((player))) {
 					player = qpug.getPlayer(ctx.getAuthor().getStringID());
 					qpug.removePlayer(mode, player);
-					ctx.getMessage().addReaction(":white_check_mark:");
+
+					Emoji e = EmojiManager.getForAlias("white_check_mark");
+					ctx.getMessage().addReaction(e);
 				} else {
 					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're not queued!");
 				}
@@ -36,7 +41,9 @@ public class RemoveCommand {
 
 				if (qpug.containsInstance((player))) {
 					qpug.removePlayer(mode, player);
-					ctx.getMessage().addReaction(":white_check_mark:");
+
+					Emoji e = EmojiManager.getForAlias("white_check_mark");
+					ctx.getMessage().addReaction(e);
 				} else {
 					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You're not queued!");
 				}
@@ -49,5 +56,10 @@ public class RemoveCommand {
 				ctx.getMessage().addReaction(":exclamation:");
 				break;
 		}
+	}
+
+	public void removeAdmin(PlayerObject p, String mode) {
+		this.player = p;
+		removeFromMode(mode);
 	}
 }

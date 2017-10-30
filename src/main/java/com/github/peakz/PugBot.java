@@ -10,6 +10,8 @@ import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.commands.*;
 import com.github.peakz.queues.QueueManager;
 import com.github.peakz.queues.QueuePug;
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.util.EmbedBuilder;
@@ -46,7 +48,7 @@ public class PugBot extends Main {
 				if(playerDAO.checkId(ctx.getAuthor().getStringID())) {
 					String strArr[] = getParts(ctx, 3);
 					if(strArr[1] == null || strArr[2] == null) {
-						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something wrong in that command");
+						ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something in that command");
 					} else {
 						UpdateCommand updateCommand = new UpdateCommand(ctx);
 						updateCommand.updatePlayer(strArr[1], strArr[2]);
@@ -63,7 +65,7 @@ public class PugBot extends Main {
 			if (queueInstances.containsKey(ctx.getChannel())) {
 				String[] strArr = getParts(ctx, 2);
 				if(strArr[1] == null) {
-					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something wrong in that command");
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something in that command");
 				} else {
 					String id = ctx.getAuthor().getStringID();
 					if (playerDAO.checkId(id)) {
@@ -83,7 +85,7 @@ public class PugBot extends Main {
 			if (queueInstances.containsKey(ctx.getChannel())) {
 				String[] strArr = getParts(ctx, 2);
 				if(strArr[1] == null) {
-					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something wrong in that command");
+					ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something in that command");
 				} else {
 					QueueManager queueManager = queueInstances.get(ctx.getChannel());
 					RemoveCommand removeCommand = new RemoveCommand(ctx, queueManager);
@@ -127,7 +129,7 @@ public class PugBot extends Main {
 					if (queueInstances.containsKey(ctx.getChannel())) {
 						String[] strArr = getParts(ctx, 2);
 						if(strArr[1] == null) {
-							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something wrong in that command");
+							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You forgot something in that command");
 						} else {
 							QueueManager queueManager = queueInstances.get(ctx.getChannel());
 							PickCommand pickInstance = new PickCommand(ctx, queueManager);
@@ -178,6 +180,28 @@ public class PugBot extends Main {
 			}
 		}).build();
 
+		Command queueClear = Command.builder().onCalled(ctx -> {
+			if(ctx.getAuthor().equals(client.getApplicationOwner())) {
+				if (queueInstances.containsKey(ctx.getChannel())) {
+					String[] strArr = getParts(ctx, 2);
+					QueuePug qpug = queueInstances.get(ctx.getChannel()).getQueuePug(ctx.getChannel(), strArr[1].toUpperCase());
+					qpug.clearPlayers();
+					if (queueInstances.get(ctx.getChannel()).getQueuePug(ctx.getChannel(), strArr[1].toUpperCase()).queuedPlayers.isEmpty()) {
+						Emoji e = EmojiManager.getForAlias("white_check_mark");
+						ctx.getMessage().addReaction(e);
+					} else {
+						Emoji e = EmojiManager.getForAlias("exclamation");
+						ctx.getMessage().addReaction(e);
+					}
+				} else {
+					ctx.getMessage().getChannel().sendMessage("This channel's name doesn't contain \"pug \"");
+				}
+			} else {
+				Emoji e = EmojiManager.getForAlias("joy");
+				ctx.getMessage().addReaction(e);
+			}
+		}).build();
+
 		// Register the commands
 		CommandRegistry registry = new CommandRegistry("!");
 		registry.register(register, "Register");
@@ -215,6 +239,10 @@ public class PugBot extends Main {
 
 		registry.register(queued, "Queued");
 		registry.register(queued, "queued");
+
+		registry.register(queueClear, "Clear");
+		registry.register(queueClear, "clear");
+
 		client.getDispatcher().registerListener(new CommandListener(registry));
 	}
 

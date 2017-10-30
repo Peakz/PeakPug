@@ -44,7 +44,7 @@ public class GameMaps {
 		return null;
 	}
 
-	public String getMapImgUrl(String map) {
+	String getMapImgUrl(String map) {
 		switch (map) {
 			case "Dorado":
 				return "https://vignette.wikia.nocookie.net/overwatch/images/5/51/Dorado_screenshot_9.png/revision/latest/scale-to-width-down/165?cb=20160630045807";

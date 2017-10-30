@@ -17,6 +17,9 @@ public class Main {
 		EventDispatcher dispatcher = INSTANCE.client.getDispatcher(); // Gets the EventDispatcher instance for this client instance
 		dispatcher.registerListener(new AnnotationListener()); // Registers the @EventSubscriber example class from above
 		PugBot.createCommands(INSTANCE.client);
+
+	//	CommandHandler commandHandler = new CommandHandler(new Ping());
+	//	dispatcher.registerListener(commandHandler);
 	}
 
 	public static Main login(String token) {

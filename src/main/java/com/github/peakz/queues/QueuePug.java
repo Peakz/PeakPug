@@ -15,28 +15,28 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class QueuePug {
 
-	private AtomicBoolean aAboutToPop;
-	private AtomicReference<MatchObject> cachedMatch;
-	public ArrayList<PlayerObject> queuedPlayers;
-	private AtomicReference<GameMaps> gameMaps;
+	private final AtomicBoolean aAboutToPop;
+	private MatchObject match;
 
-	private AtomicInteger mtank;
-	private AtomicInteger ftank;
-	private AtomicInteger hitscan;
-	private AtomicInteger projectile;
-	private AtomicInteger fsupp;
-	private AtomicInteger msupp;
+	public final ArrayList<PlayerObject> queuedPlayers;
 
-	private ConcurrentHashMap<PlayerObject, String> roleCount1;
-	private ConcurrentHashMap<PlayerObject, String> roleCount2;
+	private final AtomicInteger mtank;
+	private final AtomicInteger ftank;
+	private final AtomicInteger hitscan;
+	private final AtomicInteger projectile;
+	private final AtomicInteger fsupp;
+	private final AtomicInteger msupp;
+
+	private final ConcurrentHashMap<PlayerObject, String> roleCount1;
+	private final ConcurrentHashMap<PlayerObject, String> roleCount2;
 	private ArrayList<PlayerObject> ranks;
-	private AtomicReference<CommandContext> cachedCtx;
+	private final AtomicReference<CommandContext> cachedCtx;
 
 	QueuePug() {
 		this.aAboutToPop = new AtomicBoolean(false);
-		this.cachedMatch = new AtomicReference<>(new MatchObject());
+		this.match = new MatchObject();
+
 		this.queuedPlayers = new ArrayList<>();
-		this.gameMaps = new AtomicReference<>(new GameMaps());
 
 		this.mtank = new AtomicInteger();
 		this.ftank = new AtomicInteger();
@@ -112,9 +112,6 @@ public class QueuePug {
 		PlayerObject p = ranks.get(Integer.parseInt(number));
 		CommandContext ctx = cachedCtx.get();
 
-		// get cached match
-		MatchObject match = cachedMatch.get();
-
 		if (ranks.contains(p)) {
 			if (color.equals("RED")) {
 				TeamObject red = match.getTeam_red();
@@ -146,7 +143,7 @@ public class QueuePug {
 		}
 	}
 
-	private boolean minusPlayer(PlayerObject player) {
+	private synchronized boolean minusPlayer(PlayerObject player) {
 		queuedPlayers.remove(player);
 		player.scheduleNotification(cachedCtx.get(), "", 1, this);
 		if (roleCount1.containsKey(player)) {
@@ -154,7 +151,6 @@ public class QueuePug {
 		} else if (roleCount2.containsKey(player)) {
 			roleCount2.remove(player, player.getRoleFlag());
 		}
-
 
 		switch (player.getRoleFlag()) {
 			case "mtank":
@@ -201,12 +197,12 @@ public class QueuePug {
 		if (mode.equals("SOLOQ")) {
 			// lock queue
 			if (queuedPlayers.size() == 12 || queuedPlayers.size() > 12) {
-				aAboutToPop.getAndSet(false);
+				aAboutToPop.compareAndSet(false, true);
 			}
 		} else if (mode.equals("RANKS")) {
 			// lock queue
 			if (queuedPlayers.size() == 13 || queuedPlayers.size() > 13) {
-				aAboutToPop.getAndSet(false);
+				aAboutToPop.compareAndSet(false, true);
 			}
 		}
 		player.scheduleNotification(cachedCtx.get(), mode, 0, this);
@@ -310,33 +306,35 @@ public class QueuePug {
 
 	@SuppressWarnings("Duplicates")
 	private void balanceComps(String mode) {
-		if (mtank.get() > 1 && ftank.get() > 1 && hitscan.get() > 1 && projectile.get() > 1 && fsupp.get() > 1 && msupp.get() > 1) {
+		// Array with red players
+		PlayerObject[] rArr = new PlayerObject[6];
+		int r = 0;
 
-			// Array with red players
-			PlayerObject[] rArr = new PlayerObject[6];
-			int r = 0;
+		// Array with blue players
+		PlayerObject[] bArr = new PlayerObject[6];
+		int b = 0;
 
-			// Array with blue players
-			PlayerObject[] bArr = new PlayerObject[6];
-			int b = 0;
+		int turn = 12;
 
-			int turn = 12;
+		// Copy the queued players
+		ArrayList<PlayerObject> tempList = new ArrayList<>(queuedPlayers);
+		boolean roleCheck = (mtank.get() > 1 && ftank.get() > 1 && hitscan.get() > 1 && projectile.get() > 1 && fsupp.get() > 1 && msupp.get() > 1);
+		switch(mode) {
+			case "SOLOQ":
+				if (roleCheck) {
+					// Sort by rating
+					//sortRating(tempList);
 
-			// Copy the queued players
-			ArrayList<PlayerObject> tempList = new ArrayList<>(queuedPlayers);
+					// Add players to teams & start
+					startSoloQ(tempList, rArr, r, bArr, b, turn);
+				}
+				break;
 
-			// If it's SoloQ
-			if (mode.equals("SOLOQ")) {
-
-				// Sort by rating
-				sortRating(tempList);
-
-				// Add players to teams & start
-				startSoloQ(tempList, rArr, r, bArr, b, turn);
-				// If it's Rank S
-			} else if (mode.equals("RANKS")) {
-				startRankS(tempList);
-			}
+			case "RANKS":
+				if (roleCheck && tempList.size() > 12) {
+					startRankS(tempList);
+				}
+				break;
 		}
 	}
 
@@ -346,7 +344,6 @@ public class QueuePug {
 		TeamObject red = new TeamObject(rArr);
 		TeamObject blue = new TeamObject(bArr);
 
-		MatchObject match;
 		// Add players to teams
 		for (PlayerObject p : players) {
 
@@ -386,31 +383,32 @@ public class QueuePug {
 							minusPlayer(p);
 						}
 					}
-
-					if ((r == 6) && (b == 6)) {
-						red = new TeamObject(rArr);
-						blue = new TeamObject(bArr);
-
-						match = new MatchObject();
-						match.setMap(gameMaps.get().selectMap());
-
-						match.setTeam_red(red);
-						match.setTeam_blue(blue);
-
-						MatchDAO matchDAO = new MatchDAOImp();
-						matchDAO.insertMatch(match);
-						match.setId(matchDAO.getLastMatchID());
-						makeMatchMessage("SOLOQ");
-
-						queuedPlayers.removeAll(Arrays.asList(rArr));
-						queuedPlayers.removeAll(Arrays.asList(bArr));
-						createVerifications(match);
-
-						cachedMatch.set(match);
-					}
 				}
 			}
 		}
+
+		if ((r == 6) && (b == 6)) {
+			red = new TeamObject(rArr);
+			blue = new TeamObject(bArr);
+
+			match = new MatchObject();
+			GameMaps gameMaps = new GameMaps();
+			match.setMap(gameMaps.selectMap());
+
+			match.setTeam_red(red);
+			match.setTeam_blue(blue);
+
+			MatchDAO matchDAO = new MatchDAOImp();
+			matchDAO.insertMatch(match);
+			match.setId(matchDAO.getLastMatchID());
+			makeMatchMessage("SOLOQ");
+
+			queuedPlayers.removeAll(Arrays.asList(rArr));
+			queuedPlayers.removeAll(Arrays.asList(bArr));
+			createVerifications(match);
+			this.match = new MatchObject();
+		}
+		aAboutToPop.compareAndSet(true, false);
 	}
 
 	private void createVerifications(MatchObject match) {
@@ -428,12 +426,12 @@ public class QueuePug {
 		red.setCaptain(queuedPlayers.get(rand.nextInt(queuedPlayers.size())));
 		blue.setCaptain(queuedPlayers.get(rand.nextInt(queuedPlayers.size())));
 
-		MatchObject match = cachedMatch.get();
 
 		if (red.getCaptain() != null && blue.getCaptain() != null) {
 			match.setTeam_red(red);
 			match.setTeam_blue(blue);
 			ranks = new ArrayList<>(players);
+			aAboutToPop.compareAndSet(true, false);
 
 			GameMaps gameMaps = new GameMaps();
 			match.setMap(gameMaps.selectMap());
@@ -441,8 +439,6 @@ public class QueuePug {
 			MatchDAO matchDAO = new MatchDAOImp();
 			matchDAO.insertMatch(match);
 			match.setId(matchDAO.getLastMatchID());
-
-			cachedMatch.set(match);
 
 			makeMatchMessage("RANKS");
 		}
@@ -503,8 +499,6 @@ public class QueuePug {
 
 	private void makeMatchMessage(String mode) {
 		EmbedBuilder builder = new EmbedBuilder();
-
-		MatchObject match = cachedMatch.get();
 		CommandContext ctx = cachedCtx.get();
 
 		if (mode.equals("SOLOQ")) {
@@ -594,8 +588,6 @@ public class QueuePug {
 
 		CommandContext ctx = cachedCtx.get();
 
-		MatchObject match = cachedMatch.get();
-
 		builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).getName(), true);
 		builder.appendField("Captain", "" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getCaptain().getId())).getName(), true);
 
@@ -629,8 +621,6 @@ public class QueuePug {
 
 	public void finalRanksMessage() {
 		EmbedBuilder builder = new EmbedBuilder();
-
-		MatchObject match = cachedMatch.get();
 		CommandContext ctx = cachedCtx.get();
 
 		builder.appendField("Red Team Captain" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_red().getCaptain().getId())).mention(), "" + match.getTeam_red().getCaptain().getRoleFlag(), true);
@@ -652,7 +642,7 @@ public class QueuePug {
 		builder.appendField("" + ctx.getGuild().getUserByID(Long.valueOf(match.getTeam_blue().getPlayer_5().getId())).mention(), "" + match.getTeam_blue().getPlayer_1().getRoleFlag(), true);
 
 
-		builder.withColor(228, 38, 38);
+		builder.withColor(50, 250, 150);
 		builder.withTitle("RANK S - STARTING" + " - MATCH ID: " + match.getId());
 		builder.withDescription("MAP - " + match.getMap());
 
@@ -661,5 +651,14 @@ public class QueuePug {
 		builder.withThumbnail(gameMaps.getMapImgUrl(match.getMap()));
 		ctx.getMessage().getChannel().sendMessage(builder.build());
 		aAboutToPop.getAndSet(false);
+	}
+
+	public synchronized void clearPlayers() {
+		ArrayList<PlayerObject> tempList = queuedPlayers;
+		for (PlayerObject p : tempList) {
+			if (p != null) {
+				minusPlayer(p);
+			}
+		}
 	}
 }

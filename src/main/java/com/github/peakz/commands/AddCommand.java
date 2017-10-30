@@ -4,6 +4,8 @@ import com.darichey.discord.CommandContext;
 import com.github.peakz.DAO.PlayerObject;
 import com.github.peakz.queues.QueueManager;
 import com.github.peakz.queues.QueuePug;
+import com.vdurmont.emoji.Emoji;
+import com.vdurmont.emoji.EmojiManager;
 
 public class AddCommand {
 	private CommandContext ctx;
@@ -19,12 +21,14 @@ public class AddCommand {
 			ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " Please update your roles. I only accept the new and updated roles. Type !Help");
 		} else if (checkNewRoles(player.getPrimaryRole()) && checkNewRoles(player.getSecondaryRole())) {
 			switch (mode) {
+
 				case "SOLOQ":
 					QueuePug qpug = queueManager.getQueuePug(ctx.getChannel(), mode);
 					if (!qpug.containsInstance(player)) {
 						if (!queueManager.getQueuePug(ctx.getChannel(), "RANKS").containsInstance(player)) {
 							qpug.addPlayer("SOLOQ", player, ctx);
-							ctx.getMessage().addReaction(":white_check_mark:");
+							Emoji e = EmojiManager.getForAlias("white_check_mark");
+							ctx.getMessage().addReaction(e);
 						} else {
 							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You cannot queue for multiple modes at once!");
 						}
@@ -38,7 +42,9 @@ public class AddCommand {
 					if (!qpug.containsInstance(player)) {
 						if (!queueManager.getQueuePug(ctx.getChannel(), "SOLOQ").containsInstance(player)) {
 							qpug.addPlayer(mode, player, ctx);
-							ctx.getMessage().addReaction(":white_check_mark:");
+
+							Emoji e = EmojiManager.getForAlias("white_check_mark");
+							ctx.getMessage().addReaction(e);
 						} else {
 							ctx.getMessage().getChannel().sendMessage(ctx.getAuthor().mention() + " You cannot queue for multiple modes at once!");
 						}
